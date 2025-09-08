@@ -47,3 +47,8 @@ export const login = async (req: Request, res: Response) => {
 
   sendSuccessResponse(res, 200, "Login successful", tokens);
 };
+
+export const getMe = async (req: Request, res: Response) => {
+  const account = res.locals.account;
+  sendSuccessResponse(res, 200, "Account details", account);
+};

@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { tryCatchMiddleware } from "../middlewares/try-catch.middleware";
-import { register, login } from "../controllers/auth.controllers";
+import { register, login, getMe } from "../controllers/auth.controllers";
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -10,7 +11,7 @@ const router = Router();
  *   post:
  *     summary: Register a new user
  *     description: Register a new user with email and password
- *     tags: [Auth]
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -68,7 +69,7 @@ router.post("/register", tryCatchMiddleware(register));
  * /api/v1/login:
  *   post:
  *     summary: Login a user
- *     tags: [Auth]
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -130,5 +131,87 @@ router.post("/register", tryCatchMiddleware(register));
  *         description: Internal server error (Unknown error)
  */
 router.post("/login", tryCatchMiddleware(login));
+
+// =========================================================================================================
+// Get Me
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/me:
+ *   get:
+ *     summary: Get user information
+ *     description: Retrieve user information based on the provided token.
+ *     tags:
+ *       - Authentication
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: 64b8c9d8e4b8c9d8e4b8c9d8
+ *                     email:
+ *                       type: string
+ *                       example: john.doe@example.com
+ *                     firstName:
+ *                       type: string
+ *                       example: John Doe
+ *                     lastName:
+ *                       type: string
+ *                       example: Doe
+ *                     role:
+ *                       type: string
+ *                       example: customer
+ *                     provider:
+ *                       type: string
+ *                       example: google
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: 2023-07-18T12:34:56.789Z
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: 2023-07-18T12:34:56.789Z
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *       401:
+ *         description: Unauthorized Error (Invalid credentials)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid email or password
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 title:
+ *                   type: string
+ *                   example: Unauthorized Error
+ *                 status:
+ *                   type: number
+ *                   example: 401
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+
+router.get("/me", authMiddleware, tryCatchMiddleware(getMe));
 
 export { router as authRouter };
