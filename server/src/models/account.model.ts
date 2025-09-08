@@ -1,6 +1,6 @@
 import mongoose, { Document } from "mongoose";
 import bcrypt from "bcryptjs";
-
+import crypto from "crypto";
 interface AccountType extends Document {
   firstName: string;
   lastName: string;
@@ -13,6 +13,7 @@ interface AccountType extends Document {
   updatedAt: Date;
 
   comparePassword(password: string): Promise<boolean>;
+  generateResetPasswordToken(): Promise<string>;
 }
 
 const accountSchema = new mongoose.Schema<AccountType>({

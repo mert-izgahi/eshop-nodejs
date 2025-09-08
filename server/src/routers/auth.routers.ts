@@ -8,6 +8,8 @@ import {
   updatePassword,
   logout,
   refresh,
+  resetPasswordRequest,
+  resetPassword,
 } from "../controllers/auth.controllers";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -381,5 +383,103 @@ router.patch(
   authMiddleware,
   tryCatchMiddleware(updatePassword),
 );
+
+// =========================================================================================================
+// Reset Password Request
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/reset-password-request:
+ *   post:
+ *     summary: Request password reset
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password reset request sent successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Bad request (Invalid email)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.post(
+  "/reset-password-request",
+  tryCatchMiddleware(resetPasswordRequest),
+);
+
+// =========================================================================================================
+// Reset Password
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/reset-password:
+ *   post:
+ *     summary: Reset password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: ee1dffa5f97bb526f40bfbcb17f5e7e60caf0666b30fa017cb35204a928b976b
+ *               newPassword:
+ *                 type: string
+ *                 example: 1234567890
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password reset request sent successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Bad request (Invalid email)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.post("/reset-password", tryCatchMiddleware(resetPassword));
 
 export { router as authRouter };

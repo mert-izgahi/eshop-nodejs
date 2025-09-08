@@ -50,6 +50,12 @@ class InternalServerError extends ApiError {
   }
 }
 
+class ValidationError extends ApiError {
+  constructor(message: string = "Validation Error") {
+    super("Validation Error", message, 400);
+  }
+}
+
 export {
   ApiError,
   NotFoundError,
@@ -58,4 +64,5 @@ export {
   ForbiddenError,
   ConflictError,
   InternalServerError,
+  ValidationError,
 };

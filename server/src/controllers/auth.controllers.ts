@@ -5,12 +5,17 @@ import {
   UnauthorizedError,
   BadRequestError,
   NotFoundError,
+  ValidationError,
 } from "../utils/api-errors";
 import { sendSuccessResponse, setAccessToken, setRefreshToken } from "../utils";
 import { JwtService, type IPayload } from "../services/jwt";
+import { log } from "../utils/logger";
+import mailService from "../services/mail";
+import redisService from "../services/redis";
+import crypto from "crypto";
 
 export const register = async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName, provider } = req.body;
+  const { email, password, firstName, lastName } = req.body;
 
   const existingAccount = await Account.findOne({ email });
   if (existingAccount) {
@@ -22,10 +27,11 @@ export const register = async (req: Request, res: Response) => {
     lastName,
     email,
     password,
-    provider,
   });
 
   await account.save();
+
+  await mailService.sendWelcomeEmail(account.email);
 
   sendSuccessResponse(res, 201, "Account created successfully", account);
 };
@@ -120,4 +126,102 @@ export const refresh = async (req: Request, res: Response) => {
   setAccessToken(res, newAccessToken);
 
   sendSuccessResponse(res, 200, "Tokens refreshed successfully", true);
+};
+
+export const resetPasswordRequest = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new BadRequestError("Email is required");
+  }
+
+  const account = await Account.findOne({ email });
+
+  if (!account) {
+    throw new NotFoundError("Account not found");
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  const redisData = {
+    token: resetToken,
+    createdAt: Date.now(),
+    accountId: account._id,
+  };
+  const redisKey = `password_reset:${resetToken}`;
+
+  await redisService.set(redisKey, JSON.stringify(redisData), { EX: 3600 }); // Set expiration time to 1 hour
+
+  try {
+    await mailService.sendResetPasswordEmail(email, resetToken);
+    log.info(`Password reset email sent to: ${email}`);
+  } catch (emailError: any) {
+    log.error("Failed to send reset password email:", emailError);
+    // Clean up Redis entry if email fails
+    try {
+      await redisService.del(redisKey);
+    } catch (cleanupError: any) {
+      log.error(
+        "Failed to cleanup Redis entry after email failure:",
+        cleanupError,
+      );
+    }
+    throw new Error("Failed to send reset password email");
+  }
+
+  sendSuccessResponse(res, 200, "Reset password email sent", true);
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+  log.info(`Received token: ${token} and new password: ${newPassword}`);
+
+  if (!token || !newPassword) {
+    throw new ValidationError("Token and new password are required");
+  }
+
+  // Retrieve token data from Redis
+
+  const redisKey = `password_reset:${token}`;
+  log.info(`Redis key: ${redisKey}`);
+  const tokenDataStr = await redisService.get(redisKey);
+  log.info(`Token data retrieved from Redis: ${tokenDataStr}`);
+  const isExists = await redisService.exists(redisKey);
+  if (!isExists || !tokenDataStr) {
+    throw new UnauthorizedError("Invalid or expired reset token");
+  }
+  log.info(`Token data retrieved from Redis: ${tokenDataStr}`);
+
+  const tokenData = JSON.parse(tokenDataStr) as {
+    accountId: string;
+    token: string;
+    createdAt: string;
+  };
+
+  if (!token || !newPassword) {
+    throw new BadRequestError("Token and new password are required");
+  }
+
+  // Optional: Check token age (Redis expiration should handle this, but double-check)
+  const tokenAge = Date.now() - new Date(tokenData.createdAt).getTime();
+  const fifteenMinutes = 15 * 60 * 1000; // 50 minutes
+
+  if (tokenAge > fifteenMinutes) {
+    await redisService.del(redisKey);
+    throw new UnauthorizedError("Reset token has expired");
+  }
+
+  const account = await Account.findById(tokenData.accountId);
+
+  if (!account) {
+    throw new UnauthorizedError("Invalid token");
+  }
+
+  account.password = newPassword;
+  await account.save();
+
+  // Clear the Redis entry after successful password reset
+  await redisService.del(redisKey);
+
+  sendSuccessResponse(res, 200, "Password reset successful", true);
 };

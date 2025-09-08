@@ -77,3 +77,37 @@ export const helmetOptions = {
   },
   crossOriginEmbedderPolicy: false,
 };
+
+interface MailConfig {
+  host: string;
+  port: number;
+  auth: {
+    user: string;
+    pass: string;
+  };
+  from: string;
+}
+
+export const mailConfig: MailConfig = {
+  host: process.env.MAILTRAP_HOST!,
+  port: parseInt(process.env.MAILTRAP_PORT!),
+  auth: {
+    user: process.env.MAILTRAP_USER!,
+    pass: process.env.MAILTRAP_PASSWORD!,
+  },
+  from: process.env.MAILTRAP_FROM!,
+};
+
+interface RedisConfig {
+  user: string;
+  password: string;
+  host: string;
+  port: number;
+}
+
+export const redisConfig: RedisConfig = {
+  user: process.env.REDIS_USER!,
+  password: process.env.REDIS_PASSWORD!,
+  host: process.env.REDIS_HOST!,
+  port: parseInt(process.env.REDIS_PORT!),
+};

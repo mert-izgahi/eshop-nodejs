@@ -5,7 +5,6 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
-
 // Configs
 import { log } from "./utils/logger";
 import { corsOptions, helmetOptions, PORT, MONGODB_URI } from "./configs";
@@ -17,7 +16,7 @@ import { notFoundMiddleware } from "./middlewares/not-found.middleware";
 // Routes
 import { systemRouter } from "./routers/system.routes";
 import { authRouter } from "./routers/auth.routers";
-
+import redisService from "./services/redis";
 const app = express();
 
 app.use(cors(corsOptions));
@@ -40,6 +39,11 @@ app.use(errorHandlerMiddleware);
 
 app.listen(PORT, async () => {
   await connectDb(MONGODB_URI);
+  try {
+    await redisService.connect();
+  } catch (error: any) {
+    log.error("Failed to connect to Redis:", error);
+  }
   log.info(`Server is running on port ${PORT}`);
   log.info(`Swagger UI is available at http://localhost:${PORT}/api-docs`);
 });
