@@ -21,8 +21,8 @@ const accountSchema = new mongoose.Schema<AccountType>({
   email: { type: String, required: true, unique: true },
   profilePicture: { type: String },
   password: { type: String },
-  provider: { type: String, required: true },
-  role: { type: String, required: true },
+  provider: { type: String, required: true, default: "credentials" },
+  role: { type: String, required: true, default: "customer" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

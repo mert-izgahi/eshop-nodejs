@@ -167,7 +167,7 @@ const swaggerConfigs = {
       cookieAuth: [],
     },
   ],
-  apis: ["./src/routes/*.ts", "./src/validations/*.ts"],
+  apis: ["./src/routers/*.ts", "./src/validations/*.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerConfigs);
