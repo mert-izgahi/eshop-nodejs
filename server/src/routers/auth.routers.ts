@@ -1,6 +1,14 @@
 import { Router, type Request, type Response } from "express";
 import { tryCatchMiddleware } from "../middlewares/try-catch.middleware";
-import { register, login, getMe } from "../controllers/auth.controllers";
+import {
+  register,
+  login,
+  getMe,
+  updateMe,
+  updatePassword,
+  logout,
+  refresh,
+} from "../controllers/auth.controllers";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
@@ -191,6 +199,27 @@ router.post("/login", tryCatchMiddleware(login));
  *                   example: 200
  *       401:
  *         description: Unauthorized Error (Invalid credentials)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+
+router.get("/me", authMiddleware, tryCatchMiddleware(getMe));
+
+// =========================================================================================================
+// Logout
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
  *         content:
  *           application/json:
  *             schema:
@@ -198,20 +227,159 @@ router.post("/login", tryCatchMiddleware(login));
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Invalid email or password
+ *                   example: Logout successful
  *                 success:
  *                   type: boolean
- *                   example: false
+ *                   example: true
  *                 title:
  *                   type: string
- *                   example: Unauthorized Error
+ *                   example: Logout Successful
  *                 status:
  *                   type: number
- *                   example: 401
- *       500:
- *         description: Internal server error (Unknown error)
+ *                   example: 200
  */
+router.post("/logout", authMiddleware, tryCatchMiddleware(logout));
 
-router.get("/me", authMiddleware, tryCatchMiddleware(getMe));
+// =========================================================================================================
+// Refresh Tokens
+// =========================================================================================================
+/**
+ * @swagger
+ * /api/v1/refresh:
+ *  post:
+ *    summary: Refresh access token using refresh token
+ *    description: Refresh access token using refresh token
+ *    security:
+ *      - bearerAuth: []
+ *    tags: [Authentication]
+ *    responses:
+ *      200:
+ *        description: Success response
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  example: Refresh successful
+ *                  success:
+ *                    type: boolean
+ *                    example: true
+ *                  data:
+ *                    type: boolean
+ *                    example: true
+ *      401:
+ *        description: Unauthorized (Invalid refresh token)
+ *      500:
+ *        description: Internal server error (Unknown error)
+ */
+router.post("/refresh", tryCatchMiddleware(refresh));
+
+// =========================================================================================================
+// Update Me
+// =========================================================================================================
+/**
+ * @swagger
+ * /api/v1/update-me:
+ *  patch:
+ *    summary: Update user information
+ *    description: Update user information
+ *    security:
+ *      - bearerAuth: []
+ *    tags: [Authentication]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              firstName:
+ *                type: string
+ *                example: John Doe
+ *              lastName:
+ *                type: string
+ *                example: Doe
+ *              profilePicture:
+ *                type: string
+ *                example: http://example.com/profile.jpg
+ *    responses:
+ *      200:
+ *        description: Success response
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  example: Update successful
+ *                  success:
+ *                    type: boolean
+ *                    example: true
+ *                  data:
+ *                    type: boolean
+ *                    example: true
+ *      401:
+ *        description: Unauthorized (Invalid token)
+ *      500:
+ *        description: Internal server error (Unknown error)
+ */
+router.patch("/update-me", authMiddleware, tryCatchMiddleware(updateMe));
+
+// =========================================================================================================
+// Update Password
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /auth/update-password:
+ *    patch:
+ *      summary: Update user password
+ *      description: Update user password
+ *      security:
+ *        - bearerAuth: []
+ *      tags: [Authentication]
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                currentPassword:
+ *                  type: string
+ *                  example: oldpassword
+ *                newPassword:
+ *                  type: string
+ *                  example: newpassword
+ *      responses:
+ *        200:
+ *          description: Success response
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: Password updated successfully
+ *                  success:
+ *                    type: boolean
+ *                    example: true
+ *                  data:
+ *                    type: boolean
+ *                    example: true
+ *        401:
+ *          description: Unauthorized (Invalid token)
+ *        500:
+ *          description: Internal server error (Unknown error)
+ */
+router.patch(
+  "/update-password",
+  authMiddleware,
+  tryCatchMiddleware(updatePassword),
+);
 
 export { router as authRouter };

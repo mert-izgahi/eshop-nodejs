@@ -41,4 +41,5 @@ app.use(errorHandlerMiddleware);
 app.listen(PORT, async () => {
   await connectDb(MONGODB_URI);
   log.info(`Server is running on port ${PORT}`);
+  log.info(`Swagger UI is available at http://localhost:${PORT}/api-docs`);
 });
