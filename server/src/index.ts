@@ -10,6 +10,8 @@ import swaggerUi from "swagger-ui-express";
 import { log } from "./utils/logger";
 import { corsOptions, helmetOptions, PORT } from "./configs";
 import swaggerSpec from "./configs/swagger";
+// Middlewares
+import { errorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 
 // Routes
 import { healthRouter } from "./routes/health.routes";
@@ -29,6 +31,8 @@ app.use(express.static(path.join(__dirname, "uploads")));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/v1", healthRouter);
+
+app.use(errorHandlerMiddleware);
 
 app.listen(PORT, () => {
   log.info(`Server is running on port ${PORT}`);

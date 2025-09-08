@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { BadRequestError, InternalServerError } from "../utils/api-errors";
 
 const router = Router();
 
@@ -51,15 +52,23 @@ const router = Router();
  *             schema:
  *               type: object
  *               properties:
- *                 status:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 title:
  *                   type: string
- *                   example: error
+ *                   example: Internal Server Error
  *                 message:
  *                   type: string
  *                   example: Internal server error
+ *                 status:
+ *                   type: number
+ *                   example: 500
+ *                   description: Error status code
  */
 router.get("/health", (req: Request, res: Response) => {
   try {
+    throw new BadRequestError();
     res.status(200).json({
       status: "success",
       message: "Server is running",
@@ -69,10 +78,7 @@ router.get("/health", (req: Request, res: Response) => {
       version: process.env.API_VERSION || "1.0.0",
     });
   } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Internal server error",
-    });
+    throw new InternalServerError();
   }
 });
 
