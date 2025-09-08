@@ -14,7 +14,8 @@ import swaggerSpec from "./configs/swagger";
 import { errorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 
 // Routes
-import { healthRouter } from "./routes/health.routes";
+import { systemRouter } from "./routes/system.routes";
+import { notFoundMiddleware } from "./middlewares/not-found.middleware";
 
 const app = express();
 
@@ -30,8 +31,9 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "uploads")));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/v1", healthRouter);
+app.use("/api/v1", systemRouter);
 
+app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
 app.listen(PORT, () => {

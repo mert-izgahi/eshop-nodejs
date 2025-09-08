@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
-import { BadRequestError, InternalServerError } from "../utils/api-errors";
-
+import { tryCatchMiddleware } from "../middlewares/try-catch.middleware";
+import { checkHealth } from "../controllers/system.controllers";
 const router = Router();
 
 /**
@@ -66,20 +66,6 @@ const router = Router();
  *                   example: 500
  *                   description: Error status code
  */
-router.get("/health", (req: Request, res: Response) => {
-  try {
-    throw new BadRequestError();
-    res.status(200).json({
-      status: "success",
-      message: "Server is running",
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV || "development",
-      version: process.env.API_VERSION || "1.0.0",
-    });
-  } catch (error) {
-    throw new InternalServerError();
-  }
-});
+router.get("/health", tryCatchMiddleware(checkHealth));
 
-export { router as healthRouter };
+export { router as systemRouter };
