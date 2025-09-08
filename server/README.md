@@ -43,4 +43,8 @@ bun add express-mongo-sanitize
 bun add @types/express-mongo-sanitize --save-dev
 bun add supertest
 bun add @types/supertest --save-dev
+bun add swagger-ui-express
+bun add @types/swagger-ui-express --save-dev
+bun add swagger-jsdoc
+bun add @types/swagger-jsdoc --save-dev
 ```
