@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import { log } from "./utils/logger";
+import { PORT } from "./configs";
 
 const app = express();
 
@@ -19,6 +20,6 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "uploads")));
 
-app.listen(3000, () => {
-  log.info("Server is running on port 3000");
+app.listen(PORT, () => {
+  log.info(`Server is running on port ${PORT}`);
 });
