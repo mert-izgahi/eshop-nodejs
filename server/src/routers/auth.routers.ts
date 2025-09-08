@@ -334,7 +334,7 @@ router.patch("/update-me", authMiddleware, tryCatchMiddleware(updateMe));
 
 /**
  * @swagger
- * /auth/update-password:
+ * /api/v1/update-password:
  *    patch:
  *      summary: Update user password
  *      description: Update user password

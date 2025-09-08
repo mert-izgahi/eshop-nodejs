@@ -4,6 +4,7 @@ import {
   ConflictError,
   UnauthorizedError,
   BadRequestError,
+  NotFoundError,
 } from "../utils/api-errors";
 import { sendSuccessResponse, setAccessToken, setRefreshToken } from "../utils";
 import { JwtService, type IPayload } from "../services/jwt";
@@ -76,8 +77,11 @@ export const updatePassword = async (req: Request, res: Response) => {
   if (!currentPassword || !newPassword) {
     throw new BadRequestError("Current password and new password are required");
   }
-
-  const isMatch = await account.comparePassword(currentPassword);
+  const currentAccount = await Account.findById(account._id);
+  if (!currentAccount) {
+    throw new NotFoundError("Account not found");
+  }
+  const isMatch = await currentAccount.comparePassword(currentPassword);
 
   if (!isMatch) {
     throw new UnauthorizedError("Invalid current password");
