@@ -58,7 +58,7 @@ const RootHeader: React.FC = () => {
                 </Link>
               </Button>
               <Button asChild className="bg-red-600 hover:bg-red-700">
-                <Link href="/messages">Sign Up</Link>
+                <Link href="/sign-up">Sign Up</Link>
               </Button>
             </div>
           </div>
