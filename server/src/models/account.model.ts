@@ -18,19 +18,28 @@ interface AccountType extends Document {
   generateResetPasswordToken(): Promise<string>;
 }
 
-const accountSchema = new mongoose.Schema<AccountType>({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  profilePicture: { type: String },
-  password: { type: String },
-  isActive: { type: Boolean, default: true },
-  verified: { type: Boolean, default: false },
-  provider: { type: String, required: true, default: "credentials" },
-  role: { type: String, required: true, default: "customer" },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+const accountSchema = new mongoose.Schema<AccountType>(
+  {
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    profilePicture: { type: String },
+    password: { type: String },
+    isActive: { type: Boolean, default: true },
+    verified: { type: Boolean, default: false },
+    provider: { type: String, required: true, default: "credentials" },
+    role: { type: String, required: true, default: "customer" },
+  },
+  {
+    timestamps: true,
+    toObject: {
+      transform: function (doc, ret) {
+        delete ret.password;
+        return ret;
+      },
+    },
+  },
+);
 
 accountSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();

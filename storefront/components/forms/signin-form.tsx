@@ -13,6 +13,8 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { signInSchema, SignInSchema } from "@/lib/zod";
+import { signIn } from "next-auth/react";
+
 export const SigninForm: React.FC = () => {
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInSchema),
@@ -22,8 +24,20 @@ export const SigninForm: React.FC = () => {
     },
   });
 
-  const onSubmit = (data: SignInSchema) => {
-    console.log(data);
+  const onSubmit = async (data: SignInSchema) => {
+    const res = await signIn("credentials", {
+      redirect: false, // important for handling errors manually
+      email: data.email,
+      password: data.password,
+    });
+
+    if (res?.error) {
+      // setError(res.error); // will be "Email not found" or any server message
+      console.log(res.error);
+    } else {
+      // Redirect or refresh
+      window.location.href = "/";
+    }
   };
 
   return (

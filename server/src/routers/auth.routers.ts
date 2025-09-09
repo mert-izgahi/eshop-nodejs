@@ -13,6 +13,7 @@ import {
   resendVerificationEmail,
   verifyEmail,
   deleteAccount,
+  verifyAccessToken,
 } from "../controllers/auth.controllers";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -20,7 +21,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/register:
+ * /api/v1/auth/register:
  *   post:
  *     summary: Register a new user
  *     description: Register a new user with email and password
@@ -79,7 +80,7 @@ router.post("/register", tryCatchMiddleware(register));
 
 /**
  * @swagger
- * /api/v1/login:
+ * /api/v1/auth/login:
  *   post:
  *     summary: Login a user
  *     tags: [Authentication]
@@ -151,7 +152,7 @@ router.post("/login", tryCatchMiddleware(login));
 
 /**
  * @swagger
- * /api/v1/me:
+ * /api/v1/auth/me:
  *   get:
  *     summary: Get user information
  *     description: Retrieve user information based on the provided token.
@@ -216,7 +217,7 @@ router.get("/me", authMiddleware, tryCatchMiddleware(getMe));
 
 /**
  * @swagger
- * /api/v1/logout:
+ * /api/v1/auth/logout:
  *   post:
  *     summary: Logout user
  *     tags: [Authentication]
@@ -250,7 +251,7 @@ router.post("/logout", authMiddleware, tryCatchMiddleware(logout));
 // =========================================================================================================
 /**
  * @swagger
- * /api/v1/refresh:
+ * /api/v1/auth/refresh:
  *  post:
  *    summary: Refresh access token using refresh token
  *    description: Refresh access token using refresh token
@@ -286,7 +287,7 @@ router.post("/refresh", tryCatchMiddleware(refresh));
 // =========================================================================================================
 /**
  * @swagger
- * /api/v1/update-me:
+ * /api/v1/auth/update-me:
  *  patch:
  *    summary: Update user information
  *    description: Update user information
@@ -339,7 +340,7 @@ router.patch("/update-me", authMiddleware, tryCatchMiddleware(updateMe));
 
 /**
  * @swagger
- * /api/v1/update-password:
+ * /api/v1/auth/update-password:
  *    patch:
  *      summary: Update user password
  *      description: Update user password
@@ -393,7 +394,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/v1/reset-password-request:
+ * /api/v1/auth/reset-password-request:
  *   post:
  *     summary: Request password reset
  *     tags: [Authentication]
@@ -442,7 +443,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/reset-password:
+ * /api/v1/auth/reset-password:
  *   post:
  *     summary: Reset password
  *     tags: [Authentication]
@@ -491,7 +492,7 @@ router.post("/reset-password", tryCatchMiddleware(resetPassword));
 
 /**
  * @swagger
- * /api/v1/resend-verification-email:
+ * /api/v1/auth/resend-verification-email:
  *   post:
  *     summary: Resend verification email
  *     tags: [Authentication]
@@ -540,7 +541,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/verify-email:
+ * /api/v1/auth/verify-email:
  *   post:
  *     summary: Verify email
  *     tags: [Authentication]
@@ -589,7 +590,7 @@ router.post("/verify-email", tryCatchMiddleware(verifyEmail));
 
 /**
  * @swagger
- * /api/v1/me:
+ * /api/v1/auth/me:
  *   delete:
  *     summary: Delete account
  *     tags: [Authentication]
@@ -620,5 +621,47 @@ router.post("/verify-email", tryCatchMiddleware(verifyEmail));
  *         description: Internal server error (Unknown error)
  */
 router.delete("/me", authMiddleware, tryCatchMiddleware(deleteAccount));
+
+// =========================================================================================================
+// Verify Access Token
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/auth/verify-access-token:
+ *   get:
+ *     summary: Verify access token
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Access token verified successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized (Invalid token)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.get(
+  "/verify-access-token",
+  authMiddleware,
+  tryCatchMiddleware(verifyAccessToken),
+);
 
 export { router as authRouter };

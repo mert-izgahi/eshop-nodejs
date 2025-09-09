@@ -19,6 +19,9 @@ import mailService from "../services/mail";
 import redisService from "../services/redis";
 import crypto from "crypto";
 
+// @desc Register a new account
+// @route POST /auth/register
+// @access Public
 export const register = async (req: Request, res: Response) => {
   const { email, password, firstName, lastName } = req.body;
 
@@ -41,6 +44,9 @@ export const register = async (req: Request, res: Response) => {
   sendSuccessResponse(res, 201, "Account created successfully", account);
 };
 
+// @desc Login an existing account
+// @route POST /auth/login
+// @access Public
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -65,14 +71,23 @@ export const login = async (req: Request, res: Response) => {
   setAccessToken(res, tokens.accessToken);
   setRefreshToken(res, tokens.refreshToken);
 
-  sendSuccessResponse(res, 200, "Login successful", tokens);
+  sendSuccessResponse(res, 200, "Login successful", {
+    ...tokens,
+    ...account.toObject(),
+  });
 };
 
+// @desc Get account details
+// @route GET /auth/me
+// @access Private
 export const getMe = async (req: Request, res: Response) => {
   const account = res.locals.account;
   sendSuccessResponse(res, 200, "Account details", account);
 };
 
+// @desc Update account details
+// @route PUT /auth/me
+// @access Private
 export const updateMe = async (req: Request, res: Response) => {
   const account = res.locals.account;
   const { firstName, lastName, profilePicture } = req.body;
@@ -85,6 +100,9 @@ export const updateMe = async (req: Request, res: Response) => {
   sendSuccessResponse(res, 200, "Account updated", true);
 };
 
+// @desc Update account password
+// @route PUT /auth/password
+// @access Private
 export const updatePassword = async (req: Request, res: Response) => {
   const account = res.locals.account;
   const { currentPassword, newPassword } = req.body;
@@ -108,12 +126,18 @@ export const updatePassword = async (req: Request, res: Response) => {
   sendSuccessResponse(res, 200, "Password updated", true);
 };
 
+// @desc Logout user
+// @route POST /auth/logout
+// @access Private
 export const logout = async (req: Request, res: Response) => {
   res.clearCookie("access_token");
   res.clearCookie("refresh_token");
   sendSuccessResponse(res, 200, "Logout successful", true);
 };
 
+// @desc Refresh access token
+// @route POST /auth/refresh
+// @access Private
 export const refresh = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refresh_token;
 
@@ -131,12 +155,39 @@ export const refresh = async (req: Request, res: Response) => {
   const tokenPayload = { id: account._id } as IPayload;
   const newAccessToken = JwtService.generateAccessToken(tokenPayload);
 
-  // Set new access token in response cookies
+  // Set tokens in response cookies
   setAccessToken(res, newAccessToken);
 
   sendSuccessResponse(res, 200, "Tokens refreshed successfully", true);
 };
 
+// @desc Verify access token
+// @route POST /auth/verify-access-token
+// @access Private
+export const verifyAccessToken = async (req: Request, res: Response) => {
+  const accessToken = req.cookies.access_token;
+
+  if (!accessToken) {
+    throw new UnauthorizedError("No access token provided");
+  }
+
+  try {
+    const decoded = JwtService.verifyToken(accessToken) as IPayload;
+    const account = await Account.findById(decoded.id);
+
+    if (!account) {
+      throw new UnauthorizedError("Invalid access token");
+    }
+
+    sendSuccessResponse(res, 200, "Access token verified", true);
+  } catch (error) {
+    throw new UnauthorizedError("Invalid access token");
+  }
+};
+
+// @desc Reset password request
+// @route POST /auth/reset-password
+// @access Public
 export const resetPasswordRequest = async (req: Request, res: Response) => {
   const { email } = req.body;
 
@@ -235,6 +286,9 @@ export const resetPassword = async (req: Request, res: Response) => {
   sendSuccessResponse(res, 200, "Password reset successful", true);
 };
 
+// @desc Resend verification email
+// @route POST /auth/resend-verification
+// @access Public
 export const resendVerificationEmail = async (req: Request, res: Response) => {
   const { email } = req.body;
 
@@ -268,6 +322,9 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
   sendSuccessResponse(res, 200, "Verification email sent", true);
 };
 
+// @desc Verify email
+// @route POST /auth/verify-email
+// @access Public
 export const verifyEmail = async (req: Request, res: Response) => {
   const { token, otp } = req.body;
 
@@ -302,6 +359,9 @@ export const verifyEmail = async (req: Request, res: Response) => {
   sendSuccessResponse(res, 200, "Email verified successfully", true);
 };
 
+// @desc Delete account
+// @route POST /auth/delete-account
+// @access Private
 export const deleteAccount = async (req: Request, res: Response) => {
   const { account } = res.locals;
 
