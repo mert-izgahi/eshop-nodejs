@@ -40,6 +40,17 @@ class MailService {
 
     console.log("Message sent: %s", info.messageId);
   };
+
+  sendVerificationEmail = async (email: string, verificationToken: string) => {
+    const info = await this.transporter.sendMail({
+      from: mailConfig.from,
+      to: email,
+      subject: "Verify Your Email",
+      html: `<p>Click <a href="http://localhost:3000/verify-email/${verificationToken}">here</a> to verify your email.</p>`,
+    });
+
+    console.log("Message sent: %s", info.messageId);
+  };
 }
 
 const mailService = new MailService();

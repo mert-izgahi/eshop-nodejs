@@ -10,6 +10,8 @@ import {
   refresh,
   resetPasswordRequest,
   resetPassword,
+  resendVerificationEmail,
+  verifyEmail,
 } from "../controllers/auth.controllers";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -481,5 +483,103 @@ router.post(
  *         description: Internal server error (Unknown error)
  */
 router.post("/reset-password", tryCatchMiddleware(resetPassword));
+
+// =========================================================================================================
+// Resend Verification Email
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/resend-verification-email:
+ *   post:
+ *     summary: Resend verification email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john.doe@example.com
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Verification email sent successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Bad request (Invalid email)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.post(
+  "/resend-verification-email",
+  tryCatchMiddleware(resendVerificationEmail),
+);
+
+// =========================================================================================================
+// Verify Email
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/verify-email:
+ *   post:
+ *     summary: Verify email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: e46d2730e583b2568d2e27b748af9ed85334fc451b06206e9062a9b1713c5181
+ *               otp:
+ *                 type: string
+ *                 example: 123456
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Verification email sent successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Bad request (Invalid email)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.post("/verify-email", tryCatchMiddleware(verifyEmail));
 
 export { router as authRouter };

@@ -7,6 +7,7 @@ interface AccountType extends Document {
   email: string;
   profilePicture?: string;
   password?: string;
+  verified?: boolean;
   provider: "credentials" | "google" | "facebook";
   role: "customer" | "staff" | "seller" | "admin";
   createdAt: Date;
@@ -22,6 +23,7 @@ const accountSchema = new mongoose.Schema<AccountType>({
   email: { type: String, required: true, unique: true },
   profilePicture: { type: String },
   password: { type: String },
+  verified: { type: Boolean, default: false },
   provider: { type: String, required: true, default: "credentials" },
   role: { type: String, required: true, default: "customer" },
   createdAt: { type: Date, default: Date.now },

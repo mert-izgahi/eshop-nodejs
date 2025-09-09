@@ -24,3 +24,7 @@ export const setRefreshToken = (res: Response, token: string) => {
     maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
   });
 };
+
+export const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};

@@ -7,7 +7,12 @@ import {
   NotFoundError,
   ValidationError,
 } from "../utils/api-errors";
-import { sendSuccessResponse, setAccessToken, setRefreshToken } from "../utils";
+import {
+  generateOTP,
+  sendSuccessResponse,
+  setAccessToken,
+  setRefreshToken,
+} from "../utils";
 import { JwtService, type IPayload } from "../services/jwt";
 import { log } from "../utils/logger";
 import mailService from "../services/mail";
@@ -224,4 +229,71 @@ export const resetPassword = async (req: Request, res: Response) => {
   await redisService.del(redisKey);
 
   sendSuccessResponse(res, 200, "Password reset successful", true);
+};
+
+export const resendVerificationEmail = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new BadRequestError("Email is required");
+  }
+
+  const account = await Account.findOne({ email });
+
+  if (!account) {
+    throw new NotFoundError("Account not found");
+  }
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const otp = generateOTP();
+
+  const redisKey = `verification:${token}`;
+  await redisService.set(
+    redisKey,
+    JSON.stringify({ accountId: account.id, token, otp }),
+    { EX: 60 * 60 }, // Set expiration time to 1 hour
+  );
+
+  try {
+    await mailService.sendVerificationEmail(email, token);
+  } catch (error) {
+    await redisService.del(redisKey);
+    throw new BadRequestError("Failed to send verification email");
+  }
+
+  sendSuccessResponse(res, 200, "Verification email sent", true);
+};
+
+export const verifyEmail = async (req: Request, res: Response) => {
+  const { token, otp } = req.body;
+
+  if (!token || !otp) {
+    throw new BadRequestError("Token and OTP are required");
+  }
+
+  const redisKey = `verification:${token}`;
+  const redisData = await redisService.get(redisKey);
+
+  if (!redisData) {
+    throw new UnauthorizedError("Invalid token");
+  }
+
+  const { accountId, token: redisToken, otp: redisOtp } = JSON.parse(redisData);
+
+  if (token !== redisToken || otp !== redisOtp) {
+    throw new UnauthorizedError("Invalid OTP");
+  }
+
+  const account = await Account.findById(accountId);
+
+  if (!account) {
+    throw new NotFoundError("Account not found");
+  }
+
+  account.verified = true;
+  await account.save();
+
+  await redisService.del(redisKey);
+
+  sendSuccessResponse(res, 200, "Email verified successfully", true);
 };

@@ -64,7 +64,7 @@ class RedisService {
     }
 
     // If not connected, attempt to connect
-    this.connectionPromise = this.client.connect();
+    this.connectionPromise = this.client.connect() as any;
     await this.connectionPromise;
     this.connectionPromise = null;
   }
