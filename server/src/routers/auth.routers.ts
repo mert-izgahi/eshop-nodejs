@@ -12,6 +12,7 @@ import {
   resetPassword,
   resendVerificationEmail,
   verifyEmail,
+  deleteAccount,
 } from "../controllers/auth.controllers";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -581,5 +582,43 @@ router.post(
  *         description: Internal server error (Unknown error)
  */
 router.post("/verify-email", tryCatchMiddleware(verifyEmail));
+
+// =========================================================================================================
+// Delete Account
+// =========================================================================================================
+
+/**
+ * @swagger
+ * /api/v1/me:
+ *   delete:
+ *     summary: Delete account
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Account deleted successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized (Invalid token)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.delete("/me", authMiddleware, tryCatchMiddleware(deleteAccount));
 
 export { router as authRouter };

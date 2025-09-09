@@ -54,6 +54,10 @@ export const login = async (req: Request, res: Response) => {
     throw new UnauthorizedError("Invalid password");
   }
 
+  if (!account.isActive) {
+    throw new UnauthorizedError("Account is not active");
+  }
+
   const tokenPayload = { id: account._id } as IPayload;
   const tokens = JwtService.generateTokenPair(tokenPayload);
 
@@ -296,4 +300,27 @@ export const verifyEmail = async (req: Request, res: Response) => {
   await redisService.del(redisKey);
 
   sendSuccessResponse(res, 200, "Email verified successfully", true);
+};
+
+export const deleteAccount = async (req: Request, res: Response) => {
+  const { account } = res.locals;
+
+  if (!account) {
+    throw new NotFoundError("Account not found");
+  }
+
+  if (!account.isActive) {
+    throw new BadRequestError("Account is already inactive");
+  }
+
+  account.isActive = false;
+  await account.save();
+
+  // Clear access token cookie
+  res.clearCookie("access_token");
+
+  // Clear refresh token cookie
+  res.clearCookie("refresh_token");
+
+  sendSuccessResponse(res, 200, "Account deleted successfully", true);
 };

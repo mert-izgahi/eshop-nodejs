@@ -17,7 +17,7 @@ export const authMiddleware = async (
     const payload = JwtService.verifyToken(token) as IPayload;
     const account = await Account.findById(payload.id).select("-password");
     if (!account) throw new UnauthorizedError("Account not found");
-
+    if (!account.isActive) throw new UnauthorizedError("Account is not active");
     res.locals.account = account;
     next();
   } catch (error) {
