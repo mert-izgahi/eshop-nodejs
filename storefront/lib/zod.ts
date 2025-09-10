@@ -40,5 +40,17 @@ export const signInSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters long"),
 });
 
+export const adminAccessRequestSchema = z.object({
+  email: z.email("Email must be a valid email address"),
+});
+
+export const adminAccessVerifyKeySchema = z.object({
+  adminKey: z.string().min(6, "Key must be at least 6 characters long"),
+});
+
 export type SignUpSchema = z.infer<typeof signUpSchema>;
 export type SignInSchema = z.infer<typeof signInSchema>;
+export type AdminAccessRequestSchema = z.infer<typeof adminAccessRequestSchema>;
+export type AdminAccessVerifyKeySchema = z.infer<
+  typeof adminAccessVerifyKeySchema
+>;

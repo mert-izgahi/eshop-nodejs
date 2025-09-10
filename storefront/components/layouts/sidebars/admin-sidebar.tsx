@@ -141,9 +141,7 @@ function AdminSidebar() {
                         <SidebarMenu>
                             {
                                 adminSupportLinks.map((item) => (
-                                    <SidebarMenuItem key={item.label}>
-                                        <SidebarLink key={item.label} item={item} />
-                                    </SidebarMenuItem>
+                                    <SidebarLink key={item.label} item={item} />
                                 ))
                             }
                         </SidebarMenu>

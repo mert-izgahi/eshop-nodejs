@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/axios-client';
 import { SignInSchema, SignUpSchema } from '@/lib/zod';
 import { toast } from 'sonner';
-import { getTokens, setTokens, clearTokens, getToken } from '@/lib/local-storage';
+import { storage } from '@/lib/local-storage';
 
 interface AuthContextType {
     user: IAccount | null;
@@ -17,6 +17,7 @@ interface AuthContextType {
     isSigningUp: boolean;
     isSigningOut: boolean;
     isAdmin?: boolean;
+    hasAdminAccess?: boolean;
     isSeller?: boolean;
     isCustomer?: boolean;
     signIn: (credentials: SignInSchema) => Promise<void>;
@@ -39,8 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isSeller, setIsSeller] = useState(false);
     const [isCustomer, setIsCustomer] = useState(false);
 
-
-
     const pathname = usePathname();
     const queryClient = useQueryClient();
 
@@ -56,7 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return data;
         },
         onSuccess: (data) => {
-            setTokens(data.accessToken, data.refreshToken);
+            storage.authenticateUser(data.accessToken);
             setUser(data);
             setIsAuthenticated(true);
             queryClient.setQueryData(['user'], data);
@@ -74,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return data;
         },
         onSuccess: (data) => {
-            setTokens(data.accessToken, data.refreshToken);
+            storage.authenticateUser(data.accessToken);
             setUser(data);
             setIsAuthenticated(true);
             queryClient.setQueryData(['user'], data);
@@ -87,23 +86,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { mutateAsync: logout, isPending: isSigningOut } = useMutation({
         mutationFn: async () => {
-            const response = await api.post('/api/v1/auth/logout', {}, {
-                headers: {
-                    Authorization: `Bearer ${getToken("accessToken")}`,
-                },
-            });
+            const response = await api.post('/api/v1/auth/logout');
             return response.data;
         },
         onSuccess: () => {
-            clearTokens();
+            storage.clearAll();
             setUser(null);
             setIsAuthenticated(false);
             queryClient.clear();
+            window.location.href = '/sign-in';
             toast.success('Logged out successfully');
         },
         onError: () => {
             // Even if logout fails on server, clear local state
-            clearTokens();
+            storage.clearAll();
             setUser(null);
             setIsAuthenticated(false);
             queryClient.clear();
@@ -126,14 +122,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const getCurrentUser = useQuery<IAccount>({
         queryKey: ['user'],
         queryFn: async () => {
-            const { accessToken } = getTokens();
-            if (!accessToken) throw new Error('No token');
-
-            const response = await api.get('/api/v1/auth/me', {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
+            const response = await api.get('/api/v1/auth/me');
             const { data } = response.data;
             console.log("Current User:", data);
             return data;
@@ -141,6 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         enabled: false, // We'll manually trigger this
         retry: false,
     });
+
 
     // Redirect logic
     useEffect(() => {
@@ -194,13 +184,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 } else {
                     setUser(null);
                     setIsAuthenticated(false);
-                    clearTokens();
+                    storage.clearAll();
                 }
             })
             .catch(() => {
                 setUser(null);
                 setIsAuthenticated(false);
-                clearTokens();
+                storage.clearAll();
             })
             .finally(() => {
                 setIsCheckingAuth(false);
@@ -216,12 +206,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 isSigningIn,
                 isSigningUp,
                 isSigningOut,
+                isAdmin,
+                isSeller,
+                isCustomer,
                 signIn,
                 signUp,
                 signOut,
-                isAdmin,
-                isSeller,
-                isCustomer
             }}
         >
             {children}

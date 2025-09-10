@@ -12,8 +12,10 @@ import {
   resendVerificationEmail,
   verifyEmail,
   deleteAccount,
+  requestAdminAccess,
+  verifyAdminAccess
 } from "../controllers/auth.controllers";
-import { authMiddleware } from "../middlewares/auth.middleware";
+import { authMiddleware, authorizeFor } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -82,6 +84,7 @@ router.post("/register", tryCatchMiddleware(register));
  *   post:
  *     summary: Login a user
  *     tags: [Authentication]
+ *     description: Request new OTP to access admin panel
  *     requestBody:
  *       required: true
  *       content:
@@ -584,4 +587,98 @@ router.post("/verify-email", tryCatchMiddleware(verifyEmail));
  */
 router.delete("/me", authMiddleware, tryCatchMiddleware(deleteAccount));
 
+
+// =========================================================================================================
+// Access Admin Panel
+// =========================================================================================================
+/**
+ * @swagger
+ * /api/v1/auth/request-admin-access:
+ *   post:
+ *     summary: Access admin panel request
+ *     tags: [Authentication-Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john.doe@example.com
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Admin access email sent successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized (Invalid token)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.post("/request-admin-access", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(requestAdminAccess));
+
+// =========================================================================================================
+// Verify Admin Access
+// =========================================================================================================
+/**
+ * @swagger
+ * /api/v1/auth/verify-admin-access:
+ *   post:
+ *     summary: Verify admin access
+ *     tags: [Authentication-Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               adminKey:
+ *                 type: string
+ *                 example: 123456
+ *     responses:
+ *       200:
+ *         description: Success response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Admin access email sent successfully
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized (Invalid token)
+ *       404:
+ *         description: Not found (User not found)
+ *       500:
+ *         description: Internal server error (Unknown error)
+ */
+router.post("/verify-admin-access", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(verifyAdminAccess));
 export { router as authRouter };

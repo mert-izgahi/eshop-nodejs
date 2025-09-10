@@ -9,6 +9,10 @@ export interface IAccount {
   isActive?: boolean;
   provider: "credentials" | "google" | "facebook";
   role: "customer" | "staff" | "seller" | "admin";
+  adminAccessKey?: string;
+  adminAccessKeyExpires?: Date;
+  adminAccessKeyExpired?: boolean;
+  phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;
 }

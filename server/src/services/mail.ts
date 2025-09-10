@@ -51,6 +51,17 @@ class MailService {
 
     console.log("Message sent: %s", info.messageId);
   };
+
+  sendAdminAccessEmail = async (email: string, adminKey: string) => {
+    const info = await this.transporter.sendMail({
+      from: mailConfig.from,
+      to: email,
+      subject: "Admin Access Granted",
+      html: `<p>Your admin access key is: <strong>${adminKey}</strong></p>`,
+    });
+
+    console.log("Message sent: %s", info.messageId);
+  };
 }
 
 const mailService = new MailService();

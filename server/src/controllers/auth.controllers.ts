@@ -331,3 +331,81 @@ export const deleteAccount = async (req: Request, res: Response) => {
 
   sendSuccessResponse(res, 200, "Account deleted successfully", true);
 };
+
+
+// @desc Request admin access
+// @route POST /auth/request-admin-access
+// @access Private (Only for users with admin role)
+export const requestAdminAccess = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new BadRequestError("Email is required");
+  }
+
+  const account = await Account.findOne({ email });
+
+  if (!account) {
+    throw new NotFoundError("Account not found");
+  }
+  if (account.role !== 'admin') {
+    throw new UnauthorizedError("You are not authorized to request admin access");
+  }
+  if (!account.isActive) {
+    throw new UnauthorizedError("Account is not active");
+  }
+  const adminKey = generateOTP();
+  const redisKey = `admin_access:${adminKey}`;
+  await redisService.set(
+    redisKey,
+    JSON.stringify({ accountId: account.id, adminKey }),
+    { EX: 30 * 60 }, // Set expiration time to 10 minutes
+  );
+
+  try {
+    await mailService.sendAdminAccessEmail(email, adminKey);
+  } catch (error) {
+    await redisService.del(redisKey);
+    throw new BadRequestError("Failed to send admin access email");
+  }
+
+  sendSuccessResponse(res, 200, "Admin access email sent successfully", true);
+};
+
+// @desc Verify admin access
+// @route POST /auth/verify-admin-access
+// @access Private (Only for users with admin role)
+export const verifyAdminAccess = async (req: Request, res: Response) => {
+  const { adminKey } = req.body;
+
+  if (!adminKey) {
+    throw new BadRequestError("Token is required");
+  }
+
+  const redisKey = `admin_access:${adminKey}`;
+  const redisData = await redisService.get(redisKey);
+
+  if (!redisData) {
+    throw new UnauthorizedError("Invalid token");
+  }
+
+  const { accountId, adminKey: storedAdminKey } = JSON.parse(redisData);
+
+  if (storedAdminKey !== adminKey) {
+    throw new UnauthorizedError("Invalid admin key");
+  }
+
+  const account = await Account.findById(accountId);
+
+  if (!account) {
+    throw new NotFoundError("Account not found");
+  }
+  const adminAccessKey = crypto.randomBytes(32).toString("hex");
+  account.adminAccessKey = adminAccessKey;
+  account.adminAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000); // Set expiration time to 1 hour
+  
+  await account.save();
+  await redisService.del(redisKey);
+
+  sendSuccessResponse(res, 200, "Admin access verified successfully", { adminAccessKey });
+}

@@ -10,6 +10,9 @@ interface AccountType extends Document {
   isActive?: boolean;
   provider: "credentials" | "google" | "facebook";
   role: "customer" | "staff" | "seller" | "admin";
+  adminAccessKey?: string;
+  adminAccessKeyExpires?: Date;
+  adminAccessKeyExpired?: boolean;
   phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +32,9 @@ const accountSchema = new mongoose.Schema<AccountType>(
     verified: { type: Boolean, default: false },
     provider: { type: String, required: true, default: "credentials" },
     role: { type: String, required: true, default: "customer" },
+    adminAccessKey: { type: String },
+    adminAccessKeyExpires: { type: Date },
+    phoneNumber: { type: String },
   },
   {
     timestamps: true,
@@ -47,6 +53,10 @@ accountSchema.pre("save", async function (next) {
   if (!this.password) return next();
   this.password = await bcrypt.hash(this.password, salt);
   next();
+});
+
+accountSchema.virtual("adminAccessKeyExpired").get(function () {
+  return this.adminAccessKeyExpires && this.adminAccessKeyExpires < new Date();
 });
 
 accountSchema.methods.comparePassword = async function (
