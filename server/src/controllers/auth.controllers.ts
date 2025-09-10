@@ -10,6 +10,7 @@ import {
 import {
   generateOTP,
   sendSuccessResponse,
+  setAccessToken
 } from "../utils";
 import { JwtService, type IPayload } from "../services/jwt";
 import { log } from "../utils/logger";
@@ -39,9 +40,10 @@ export const register = async (req: Request, res: Response) => {
 
   await mailService.sendWelcomeEmail(account.email);
 
-  const tokens = JwtService.generateTokenPair({ id: account._id } as IPayload);
+  const accessToken = JwtService.generateAccessToken({ id: account._id } as IPayload);
+  setAccessToken(res, accessToken);
+  const response = { accessToken, ...account.toObject() }
 
-  const response = { ...tokens, ...account.toObject() }
   sendSuccessResponse(res, 201, "Account created successfully", response);
 };
 
@@ -65,10 +67,10 @@ export const login = async (req: Request, res: Response) => {
     throw new UnauthorizedError("Account is not active");
   }
 
-  const tokenPayload = { id: account._id } as IPayload;
-  const tokens = JwtService.generateTokenPair(tokenPayload);
 
-  const response = { ...tokens, ...account.toObject() }
+  const accessToken = JwtService.generateAccessToken({ id: account._id } as IPayload);
+  setAccessToken(res, accessToken);
+  const response = { accessToken, ...account.toObject() }
 
   sendSuccessResponse(res, 200, "Login successful", response);
 };
@@ -78,67 +80,11 @@ export const login = async (req: Request, res: Response) => {
 // @access Private
 export const logout = async (req: Request, res: Response) => {
   const response = {
-    accessToken: null,
-    refreshToken: null
+    accessToken: null
   }
   sendSuccessResponse(res, 200, "Logout successful", response);
 };
 
-// @desc Refresh access token
-// @route POST /auth/refresh
-// @access Private
-export const refresh = async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    throw new UnauthorizedError("Invalid credentials");
-  }
-
-  const decoded = JwtService.verifyToken(refreshToken) as IPayload;
-  const account = await Account.findById(decoded.id);
-
-  if (!account) {
-    throw new UnauthorizedError("Invalid refresh token");
-  }
-
-  const tokenPayload = { id: account._id } as IPayload;
-  const newAccessToken = JwtService.generateAccessToken(tokenPayload);
-
-  sendSuccessResponse(res, 200, "Tokens refreshed successfully", {
-    accessToken: newAccessToken,
-    refreshToken,
-  });
-};
-
-// @desc Verify access token
-// @route POST /auth/verify-access-token
-// @access Private
-export const verifyAccessToken = async (req: Request, res: Response) => {
-  const { accessToken } = req.body;
-  console.log("Access Token:", accessToken);
-
-  if (!accessToken) {
-    throw new UnauthorizedError("No access token provided");
-  }
-  const isExpired = JwtService.isTokenExpired(accessToken);
-
-  if (isExpired) {
-    throw new UnauthorizedError("Access token expired");
-  }
-
-  try {
-    const decoded = JwtService.verifyToken(accessToken) as IPayload;
-    const account = await Account.findById(decoded.id);
-
-    if (!account) {
-      throw new UnauthorizedError("Invalid access token");
-    }
-
-    sendSuccessResponse(res, 200, "Access token verified", true);
-  } catch (error) {
-    throw new UnauthorizedError("Invalid access token");
-  }
-};
 
 // @desc Get account details
 // @route GET /auth/me
@@ -382,9 +328,6 @@ export const deleteAccount = async (req: Request, res: Response) => {
 
   // Clear access token cookie
   res.clearCookie("access_token");
-
-  // Clear refresh token cookie
-  res.clearCookie("refresh_token");
 
   sendSuccessResponse(res, 200, "Account deleted successfully", true);
 };

@@ -13,6 +13,7 @@ import { connectDb } from "./configs/mongoose";
 // Middlewares
 import { errorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware";
+import { loggerMiddleware } from "./middlewares/logger.middleware";
 // Routes
 import { systemRouter } from "./routers/system.routes";
 import { authRouter } from "./routers/auth.routers";
@@ -23,7 +24,7 @@ app.use(cors(corsOptions));
 app.use(helmet(helmetOptions));
 app.use(expressMongoSanitize());
 app.use(cookieParser());
-
+app.use(loggerMiddleware);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 

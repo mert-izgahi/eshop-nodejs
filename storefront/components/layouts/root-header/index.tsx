@@ -2,7 +2,7 @@
 
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/ui/button";
-import { Bell, MessageCircle, ShoppingBag } from "lucide-react";
+import { Bell, Loader2, MessageCircle, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
@@ -13,7 +13,7 @@ import UserButton from "@/components/common/user-button";
 
 
 const RootHeader: React.FC = () => {
-  const { isCheckingAuth, isAuthenticated } = useAuth();
+  const { isCheckingAuth, isAuthenticated, isAdmin } = useAuth();
   const links = [
     { label: "Home", link: "/" },
     { label: "Products", link: "/products" },
@@ -67,7 +67,11 @@ const RootHeader: React.FC = () => {
                   </Button>
                 </>
               }
-
+              {
+                isCheckingAuth && (
+                  <Loader2 className="animate-spin w-4 h-4" />
+                )
+              }
               {!isCheckingAuth && isAuthenticated && (
                 <UserButton />
               )}
@@ -90,6 +94,9 @@ const RootHeader: React.FC = () => {
             </div>
             <div className="flex items-center gap-x-2">
               <HeaderLink label="Start Selling" link="/start-selling" />
+              {
+                isAdmin && <HeaderLink label="Admin Panel" link="/admin" />
+              }
             </div>
           </div>
         </div>

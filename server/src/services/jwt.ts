@@ -9,7 +9,7 @@ export class JwtService {
   private static AccessTokenSecret =
     process.env.JWT_ACCESS_TOKEN_SECRET || "secret";
   private static AccessTokenExpiration =
-    process.env.JWT_ACCESS_TOKEN_EXPIRATION || "1m";
+    process.env.JWT_ACCESS_TOKEN_EXPIRATION || "1d";
   private static RefreshTokenSecret =
     process.env.JWT_REFRESH_TOKEN_SECRET || "secret";
   private static RefreshTokenExpiration =

@@ -7,13 +7,11 @@ import {
   updateMe,
   updatePassword,
   logout,
-  refresh,
   resetPasswordRequest,
   resetPassword,
   resendVerificationEmail,
   verifyEmail,
   deleteAccount,
-  verifyAccessToken,
 } from "../controllers/auth.controllers";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -245,42 +243,6 @@ router.get("/me", authMiddleware, tryCatchMiddleware(getMe));
  *                   example: 200
  */
 router.post("/logout", authMiddleware, tryCatchMiddleware(logout));
-
-// =========================================================================================================
-// Refresh Tokens
-// =========================================================================================================
-/**
- * @swagger
- * /api/v1/auth/refresh:
- *  post:
- *    summary: Refresh access token using refresh token
- *    description: Refresh access token using refresh token
- *    security:
- *      - bearerAuth: []
- *    tags: [Authentication]
- *    responses:
- *      200:
- *        description: Success response
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *              properties:
- *                message:
- *                  type: string
- *                  example: Refresh successful
- *                  success:
- *                    type: boolean
- *                    example: true
- *                  data:
- *                    type: boolean
- *                    example: true
- *      401:
- *        description: Unauthorized (Invalid refresh token)
- *      500:
- *        description: Internal server error (Unknown error)
- */
-router.post("/refresh", tryCatchMiddleware(refresh));
 
 // =========================================================================================================
 // Update Me
@@ -621,48 +583,5 @@ router.post("/verify-email", tryCatchMiddleware(verifyEmail));
  *         description: Internal server error (Unknown error)
  */
 router.delete("/me", authMiddleware, tryCatchMiddleware(deleteAccount));
-
-// =========================================================================================================
-// Verify Access Token
-// =========================================================================================================
-
-/**
- * @swagger
- * /api/v1/auth/verify-access-token:
- *   post:
- *     summary: Verify access token
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
-
- *     responses:
- *       200:
- *         description: Success response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Access token verified successfully
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: boolean
- *                   example: true
- *       401:
- *         description: Unauthorized (Invalid token)
- *       404:
- *         description: Not found (User not found)
- *       500:
- *         description: Internal server error (Unknown error)
- */
-router.post(
-  "/verify-access-token",
-  authMiddleware,
-  tryCatchMiddleware(verifyAccessToken),
-);
 
 export { router as authRouter };

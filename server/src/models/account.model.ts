@@ -1,6 +1,5 @@
 import mongoose, { Document } from "mongoose";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 interface AccountType extends Document {
   firstName: string;
   lastName: string;
@@ -11,6 +10,7 @@ interface AccountType extends Document {
   isActive?: boolean;
   provider: "credentials" | "google" | "facebook";
   role: "customer" | "staff" | "seller" | "admin";
+  phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;
 
