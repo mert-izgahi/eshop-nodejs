@@ -8,10 +8,12 @@ import Link from "next/link";
 import * as React from "react";
 import SearchForm from "./search-form";
 import HeaderLink from "./header-link";
-import { useGetCurrentAccount } from "@/hooks/use-auth";
+import { useAuth } from "@/providers/auth-provider";
+import UserButton from "@/components/common/user-button";
+
 
 const RootHeader: React.FC = () => {
-  
+  const { isCheckingAuth, isAuthenticated } = useAuth();
   const links = [
     { label: "Home", link: "/" },
     { label: "Products", link: "/products" },
@@ -19,7 +21,7 @@ const RootHeader: React.FC = () => {
     { label: "About", link: "/about" },
     { label: "Contact", link: "/contact" },
   ];
-  
+
   return (
     <div className="py-4 border-b flex items-center justify-center">
       <Container className="w-full">
@@ -51,19 +53,31 @@ const RootHeader: React.FC = () => {
                 </Link>
               </Button>
 
-              <Button asChild size={"icon"} variant={"ghost"}>
-                <Link href="/notifications">
-                  <Bell />
-                </Link>
-              </Button>
-              <Button asChild size={"icon"} variant={"ghost"}>
-                <Link href="/messages">
-                  <MessageCircle />
-                </Link>
-              </Button>
-              <Button asChild className="bg-red-600 hover:bg-red-700">
-                  <Link href="/sign-up">Sign Up</Link>
+              {
+                isAuthenticated && !isCheckingAuth && <>
+                  <Button asChild size={"icon"} variant={"ghost"}>
+                    <Link href="/notifications">
+                      <Bell />
+                    </Link>
+                  </Button>
+                  <Button asChild size={"icon"} variant={"ghost"}>
+                    <Link href="/messages">
+                      <MessageCircle />
+                    </Link>
+                  </Button>
+                </>
+              }
+
+              {!isCheckingAuth && isAuthenticated && (
+                <UserButton />
+              )}
+
+              {!isAuthenticated && !isCheckingAuth && (
+                <Button asChild className="bg-red-600 hover:bg-red-600/90  px-4">
+                  <Link href="/sign-in">Sign In</Link>
                 </Button>
+              )}
+
 
             </div>
           </div>

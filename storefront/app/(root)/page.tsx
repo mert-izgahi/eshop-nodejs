@@ -1,4 +1,5 @@
 import axios from "axios";
+import HomePage from "./client";
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
@@ -14,7 +15,5 @@ export default async function Home() {
 
   await checkHealth();
 
-  return <div>
-    Welcome to E-Shop!
-  </div>;
+  return <HomePage />;
 }
