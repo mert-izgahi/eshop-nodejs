@@ -13,7 +13,12 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { signInSchema, SignInSchema } from "@/lib/zod";
-import { signIn } from "next-auth/react";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import axios from "axios";
+import { useAuth } from "@/providers/auth-provider";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
 export const SigninForm: React.FC = () => {
   const form = useForm<SignInSchema>({
@@ -23,22 +28,8 @@ export const SigninForm: React.FC = () => {
       password: "",
     },
   });
-
-  const onSubmit = async (data: SignInSchema) => {
-    const res = await signIn("credentials", {
-      redirect: false, // important for handling errors manually
-      email: data.email,
-      password: data.password,
-    });
-
-    if (res?.error) {
-      // setError(res.error); // will be "Email not found" or any server message
-      console.log(res.error);
-    } else {
-      // Redirect or refresh
-      window.location.href = "/";
-    }
-  };
+  const { signIn, isSigningIn } = useAuth();
+  const onSubmit = async (data: SignInSchema) => await signIn(data);
 
   return (
     <Form {...form}>
@@ -85,7 +76,9 @@ export const SigninForm: React.FC = () => {
         <Button
           type="submit"
           className="bg-red-600 hover:bg-red-700 cursor-pointer"
+          disabled={isSigningIn}
         >
+          {isSigningIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign In
         </Button>
       </form>

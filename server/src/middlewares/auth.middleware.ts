@@ -10,7 +10,8 @@ export const authMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    const token = req.cookies.access_token;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
     if (!token) throw new UnauthorizedError("Please provide a token");
     const isExpired = JwtService.isTokenExpired(token);
     if (isExpired) throw new UnauthorizedError("Token expired");

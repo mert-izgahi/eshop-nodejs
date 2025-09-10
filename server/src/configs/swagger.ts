@@ -29,11 +29,6 @@ const swaggerConfigs = {
           scheme: "bearer",
           bearerFormat: "JWT",
         },
-        cookieAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT",
-        },
       },
     },
   },
@@ -162,9 +157,6 @@ const swaggerConfigs = {
   security: [
     {
       bearerAuth: [],
-    },
-    {
-      cookieAuth: [],
     },
   ],
   apis: ["./src/routers/*.ts", "./src/validations/*.ts"],

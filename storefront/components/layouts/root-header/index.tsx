@@ -1,3 +1,5 @@
+"use client";
+
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/ui/button";
 import { Bell, MessageCircle, ShoppingBag } from "lucide-react";
@@ -5,10 +7,11 @@ import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
 import SearchForm from "./search-form";
-import { usePathname } from "next/navigation";
 import HeaderLink from "./header-link";
+import { useGetCurrentAccount } from "@/hooks/use-auth";
 
 const RootHeader: React.FC = () => {
+  
   const links = [
     { label: "Home", link: "/" },
     { label: "Products", link: "/products" },
@@ -16,6 +19,7 @@ const RootHeader: React.FC = () => {
     { label: "About", link: "/about" },
     { label: "Contact", link: "/contact" },
   ];
+  
   return (
     <div className="py-4 border-b flex items-center justify-center">
       <Container className="w-full">
@@ -58,8 +62,9 @@ const RootHeader: React.FC = () => {
                 </Link>
               </Button>
               <Button asChild className="bg-red-600 hover:bg-red-700">
-                <Link href="/sign-up">Sign Up</Link>
-              </Button>
+                  <Link href="/sign-up">Sign Up</Link>
+                </Button>
+
             </div>
           </div>
 

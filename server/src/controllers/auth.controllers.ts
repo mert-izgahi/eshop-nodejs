@@ -10,8 +10,6 @@ import {
 import {
   generateOTP,
   sendSuccessResponse,
-  setAccessToken,
-  setRefreshToken,
 } from "../utils";
 import { JwtService, type IPayload } from "../services/jwt";
 import { log } from "../utils/logger";
@@ -41,7 +39,10 @@ export const register = async (req: Request, res: Response) => {
 
   await mailService.sendWelcomeEmail(account.email);
 
-  sendSuccessResponse(res, 201, "Account created successfully", account);
+  const tokens = JwtService.generateTokenPair({ id: account._id } as IPayload);
+
+  const response = { ...tokens, ...account.toObject() }
+  sendSuccessResponse(res, 201, "Account created successfully", response);
 };
 
 // @desc Login an existing account
@@ -67,14 +68,76 @@ export const login = async (req: Request, res: Response) => {
   const tokenPayload = { id: account._id } as IPayload;
   const tokens = JwtService.generateTokenPair(tokenPayload);
 
-  // Set tokens in response cookies
-  setAccessToken(res, tokens.accessToken);
-  setRefreshToken(res, tokens.refreshToken);
+  const response = { ...tokens, ...account.toObject() }
 
-  sendSuccessResponse(res, 200, "Login successful", {
-    ...tokens,
-    ...account.toObject(),
+  sendSuccessResponse(res, 200, "Login successful", response);
+};
+
+// @desc Logout user
+// @route POST /auth/logout
+// @access Private
+export const logout = async (req: Request, res: Response) => {
+  const response = {
+    accessToken: null,
+    refreshToken: null
+  }
+  sendSuccessResponse(res, 200, "Logout successful", response);
+};
+
+// @desc Refresh access token
+// @route POST /auth/refresh
+// @access Private
+export const refresh = async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    throw new UnauthorizedError("Invalid credentials");
+  }
+
+  const decoded = JwtService.verifyToken(refreshToken) as IPayload;
+  const account = await Account.findById(decoded.id);
+
+  if (!account) {
+    throw new UnauthorizedError("Invalid refresh token");
+  }
+
+  const tokenPayload = { id: account._id } as IPayload;
+  const newAccessToken = JwtService.generateAccessToken(tokenPayload);
+
+  sendSuccessResponse(res, 200, "Tokens refreshed successfully", {
+    accessToken: newAccessToken,
+    refreshToken,
   });
+};
+
+// @desc Verify access token
+// @route POST /auth/verify-access-token
+// @access Private
+export const verifyAccessToken = async (req: Request, res: Response) => {
+  const { accessToken } = req.body;
+  console.log("Access Token:", accessToken);
+
+  if (!accessToken) {
+    throw new UnauthorizedError("No access token provided");
+  }
+  const isExpired = JwtService.isTokenExpired(accessToken);
+
+  if (isExpired) {
+    throw new UnauthorizedError("Access token expired");
+  }
+
+  try {
+    const decoded = JwtService.verifyToken(accessToken) as IPayload;
+    const account = await Account.findById(decoded.id);
+
+    if (!account) {
+      throw new UnauthorizedError("Invalid access token");
+    }
+
+    sendSuccessResponse(res, 200, "Access token verified", true);
+  } catch (error) {
+    throw new UnauthorizedError("Invalid access token");
+  }
 };
 
 // @desc Get account details
@@ -124,65 +187,6 @@ export const updatePassword = async (req: Request, res: Response) => {
   await account.save();
 
   sendSuccessResponse(res, 200, "Password updated", true);
-};
-
-// @desc Logout user
-// @route POST /auth/logout
-// @access Private
-export const logout = async (req: Request, res: Response) => {
-  res.clearCookie("access_token");
-  res.clearCookie("refresh_token");
-  sendSuccessResponse(res, 200, "Logout successful", true);
-};
-
-// @desc Refresh access token
-// @route POST /auth/refresh
-// @access Private
-export const refresh = async (req: Request, res: Response) => {
-  const refreshToken = req.cookies.refresh_token;
-
-  if (!refreshToken) {
-    throw new UnauthorizedError("No refresh token provided");
-  }
-
-  const decoded = JwtService.verifyToken(refreshToken) as IPayload;
-  const account = await Account.findById(decoded.id);
-
-  if (!account) {
-    throw new UnauthorizedError("Invalid refresh token");
-  }
-
-  const tokenPayload = { id: account._id } as IPayload;
-  const newAccessToken = JwtService.generateAccessToken(tokenPayload);
-
-  // Set tokens in response cookies
-  setAccessToken(res, newAccessToken);
-
-  sendSuccessResponse(res, 200, "Tokens refreshed successfully", true);
-};
-
-// @desc Verify access token
-// @route POST /auth/verify-access-token
-// @access Private
-export const verifyAccessToken = async (req: Request, res: Response) => {
-  const accessToken = req.cookies.access_token;
-
-  if (!accessToken) {
-    throw new UnauthorizedError("No access token provided");
-  }
-
-  try {
-    const decoded = JwtService.verifyToken(accessToken) as IPayload;
-    const account = await Account.findById(decoded.id);
-
-    if (!account) {
-      throw new UnauthorizedError("Invalid access token");
-    }
-
-    sendSuccessResponse(res, 200, "Access token verified", true);
-  } catch (error) {
-    throw new UnauthorizedError("Invalid access token");
-  }
 };
 
 // @desc Reset password request

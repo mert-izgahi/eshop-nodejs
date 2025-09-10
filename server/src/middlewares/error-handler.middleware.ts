@@ -8,7 +8,7 @@ export const errorHandlerMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
-  log.error(err);
+  
   if (err instanceof ApiError) {
     return res.status(err.status).json({
       success: false,

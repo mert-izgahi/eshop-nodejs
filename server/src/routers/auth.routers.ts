@@ -629,11 +629,12 @@ router.delete("/me", authMiddleware, tryCatchMiddleware(deleteAccount));
 /**
  * @swagger
  * /api/v1/auth/verify-access-token:
- *   get:
+ *   post:
  *     summary: Verify access token
  *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
+
  *     responses:
  *       200:
  *         description: Success response
@@ -658,7 +659,7 @@ router.delete("/me", authMiddleware, tryCatchMiddleware(deleteAccount));
  *       500:
  *         description: Internal server error (Unknown error)
  */
-router.get(
+router.post(
   "/verify-access-token",
   authMiddleware,
   tryCatchMiddleware(verifyAccessToken),

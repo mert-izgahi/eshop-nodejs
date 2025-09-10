@@ -1,17 +1,20 @@
-import * as React from "react";
-import { axiosClient } from "@/lib/axios-client";
+import axios from "axios";
+
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+const checkHealth = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/v1/health`);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 export default async function Home() {
-  const checkHealth = async () => {
-    try {
-      const response = await axiosClient.get("/api/v1/health");
-      console.log(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   await checkHealth();
 
-  return <div></div>;
+  return <div>
+    Welcome to E-Shop!
+  </div>;
 }
