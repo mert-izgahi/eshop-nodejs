@@ -1,3 +1,4 @@
+
 import { type Request, type Response } from "express";
 import Account from "../models/account.model";
 import {
@@ -43,7 +44,6 @@ export const register = async (req: Request, res: Response) => {
   const accessToken = JwtService.generateAccessToken({ id: account._id } as IPayload);
   setAccessToken(res, accessToken);
   const response = { accessToken, ...account.toObject() }
-
   sendSuccessResponse(res, 201, "Account created successfully", response);
 };
 
@@ -67,10 +67,21 @@ export const login = async (req: Request, res: Response) => {
     throw new UnauthorizedError("Account is not active");
   }
 
-
   const accessToken = JwtService.generateAccessToken({ id: account._id } as IPayload);
   setAccessToken(res, accessToken);
-  const response = { accessToken, ...account.toObject() }
+
+  // Always include fresh admin permission status
+  const accountObj = account.toObject();
+  const hasValidAdminAccess = account.role === 'admin' &&
+    account.adminAccessKey &&
+    account.adminAccessKeyExpires &&
+    new Date(account.adminAccessKeyExpires) > new Date();
+
+  const response = {
+    accessToken,
+    ...accountObj,
+    hasValidAdminAccess
+  };
 
   sendSuccessResponse(res, 200, "Login successful", response);
 };
@@ -79,9 +90,19 @@ export const login = async (req: Request, res: Response) => {
 // @route POST /auth/logout
 // @access Private
 export const logout = async (req: Request, res: Response) => {
-  const response = {
-    accessToken: null
+  // Clear admin access key on logout for security
+  const account = res.locals.account;
+  if (account && account.role === 'admin') {
+    await Account.findByIdAndUpdate(account._id, {
+      $unset: {
+        adminAccessKey: 1,
+        adminAccessKeyExpires: 1
+      }
+    });
   }
+
+  res.clearCookie("access_token");
+  const response = { accessToken: null };
   sendSuccessResponse(res, 200, "Logout successful", response);
 };
 
@@ -91,7 +112,19 @@ export const logout = async (req: Request, res: Response) => {
 // @access Private
 export const getMe = async (req: Request, res: Response) => {
   const account = res.locals.account;
-  sendSuccessResponse(res, 200, "Account details", account);
+
+  // Always return fresh admin permission status
+  const hasValidAdminAccess = account.role === 'admin' &&
+    account.adminAccessKey &&
+    account.adminAccessKeyExpires &&
+    new Date(account.adminAccessKeyExpires) > new Date();
+
+  const accountData = {
+    ...account.toObject(),
+    hasValidAdminAccess
+  };
+
+  sendSuccessResponse(res, 200, "Account details", accountData);
 };
 
 // @desc Update account details
@@ -119,18 +152,25 @@ export const updatePassword = async (req: Request, res: Response) => {
   if (!currentPassword || !newPassword) {
     throw new BadRequestError("Current password and new password are required");
   }
+
   const currentAccount = await Account.findById(account._id);
   if (!currentAccount) {
     throw new NotFoundError("Account not found");
   }
-  const isMatch = await currentAccount.comparePassword(currentPassword);
 
+  const isMatch = await currentAccount.comparePassword(currentPassword);
   if (!isMatch) {
     throw new UnauthorizedError("Invalid current password");
   }
 
-  account.password = newPassword;
-  await account.save();
+  // Clear admin access on password change for security
+  if (currentAccount.role === 'admin') {
+    currentAccount.adminAccessKey = undefined;
+    currentAccount.adminAccessKeyExpires = undefined;
+  }
+
+  currentAccount.password = newPassword;
+  await currentAccount.save();
 
   sendSuccessResponse(res, 200, "Password updated", true);
 };
@@ -146,13 +186,11 @@ export const resetPasswordRequest = async (req: Request, res: Response) => {
   }
 
   const account = await Account.findOne({ email });
-
   if (!account) {
     throw new NotFoundError("Account not found");
   }
 
   const resetToken = crypto.randomBytes(32).toString("hex");
-
   const redisData = {
     token: resetToken,
     createdAt: Date.now(),
@@ -160,77 +198,67 @@ export const resetPasswordRequest = async (req: Request, res: Response) => {
   };
   const redisKey = `password_reset:${resetToken}`;
 
-  await redisService.set(redisKey, JSON.stringify(redisData), { EX: 3600 }); // Set expiration time to 1 hour
+  await redisService.set(redisKey, JSON.stringify(redisData), { EX: 3600 });
 
   try {
     await mailService.sendResetPasswordEmail(email, resetToken);
     log.info(`Password reset email sent to: ${email}`);
   } catch (emailError: any) {
     log.error("Failed to send reset password email:", emailError);
-    // Clean up Redis entry if email fails
-    try {
-      await redisService.del(redisKey);
-    } catch (cleanupError: any) {
-      log.error(
-        "Failed to cleanup Redis entry after email failure:",
-        cleanupError,
-      );
-    }
+    await redisService.del(redisKey).catch(err =>
+      log.error("Failed to cleanup Redis entry:", err)
+    );
     throw new Error("Failed to send reset password email");
   }
 
   sendSuccessResponse(res, 200, "Reset password email sent", true);
 };
 
+// @desc Reset password
+// @route POST /auth/reset-password/verify
+// @access Public
 export const resetPassword = async (req: Request, res: Response) => {
   const { token, newPassword } = req.body;
-  log.info(`Received token: ${token} and new password: ${newPassword}`);
 
   if (!token || !newPassword) {
     throw new ValidationError("Token and new password are required");
   }
 
-  // Retrieve token data from Redis
-
   const redisKey = `password_reset:${token}`;
-  log.info(`Redis key: ${redisKey}`);
   const tokenDataStr = await redisService.get(redisKey);
-  log.info(`Token data retrieved from Redis: ${tokenDataStr}`);
-  const isExists = await redisService.exists(redisKey);
-  if (!isExists || !tokenDataStr) {
+
+  if (!tokenDataStr) {
     throw new UnauthorizedError("Invalid or expired reset token");
   }
-  log.info(`Token data retrieved from Redis: ${tokenDataStr}`);
 
   const tokenData = JSON.parse(tokenDataStr) as {
     accountId: string;
     token: string;
-    createdAt: string;
+    createdAt: number;
   };
 
-  if (!token || !newPassword) {
-    throw new BadRequestError("Token and new password are required");
-  }
+  // Double-check token age
+  const tokenAge = Date.now() - tokenData.createdAt;
+  const oneHour = 60 * 60 * 1000;
 
-  // Optional: Check token age (Redis expiration should handle this, but double-check)
-  const tokenAge = Date.now() - new Date(tokenData.createdAt).getTime();
-  const fifteenMinutes = 15 * 60 * 1000; // 50 minutes
-
-  if (tokenAge > fifteenMinutes) {
+  if (tokenAge > oneHour) {
     await redisService.del(redisKey);
     throw new UnauthorizedError("Reset token has expired");
   }
 
   const account = await Account.findById(tokenData.accountId);
-
   if (!account) {
     throw new UnauthorizedError("Invalid token");
   }
 
+  // Clear admin access on password reset for security
+  if (account.role === 'admin') {
+    account.adminAccessKey = undefined;
+    account.adminAccessKeyExpires = undefined;
+  }
+
   account.password = newPassword;
   await account.save();
-
-  // Clear the Redis entry after successful password reset
   await redisService.del(redisKey);
 
   sendSuccessResponse(res, 200, "Password reset successful", true);
@@ -247,19 +275,18 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
   }
 
   const account = await Account.findOne({ email });
-
   if (!account) {
     throw new NotFoundError("Account not found");
   }
 
   const token = crypto.randomBytes(32).toString("hex");
   const otp = generateOTP();
-
   const redisKey = `verification:${token}`;
+
   await redisService.set(
     redisKey,
     JSON.stringify({ accountId: account.id, token, otp }),
-    { EX: 60 * 60 }, // Set expiration time to 1 hour
+    { EX: 60 * 60 }
   );
 
   try {
@@ -296,14 +323,12 @@ export const verifyEmail = async (req: Request, res: Response) => {
   }
 
   const account = await Account.findById(accountId);
-
   if (!account) {
     throw new NotFoundError("Account not found");
   }
 
   account.verified = true;
   await account.save();
-
   await redisService.del(redisKey);
 
   sendSuccessResponse(res, 200, "Email verified successfully", true);
@@ -324,9 +349,13 @@ export const deleteAccount = async (req: Request, res: Response) => {
   }
 
   account.isActive = false;
-  await account.save();
+  // Clear admin access keys when deactivating
+  if (account.role === 'admin') {
+    account.adminAccessKey = undefined;
+    account.adminAccessKeyExpires = undefined;
+  }
 
-  // Clear access token cookie
+  await account.save();
   res.clearCookie("access_token");
 
   sendSuccessResponse(res, 200, "Account deleted successfully", true);
@@ -337,33 +366,39 @@ export const deleteAccount = async (req: Request, res: Response) => {
 // @route POST /auth/request-admin-access
 // @access Private (Only for users with admin role)
 export const requestAdminAccess = async (req: Request, res: Response) => {
-  const { email } = req.body;
-
-  if (!email) {
-    throw new BadRequestError("Email is required");
-  }
-
-  const account = await Account.findOne({ email });
+  const account = res.locals.account;
 
   if (!account) {
-    throw new NotFoundError("Account not found");
+    throw new BadRequestError("Account not found");
   }
+
   if (account.role !== 'admin') {
     throw new UnauthorizedError("You are not authorized to request admin access");
   }
+
   if (!account.isActive) {
     throw new UnauthorizedError("Account is not active");
   }
+
+  // Clear any existing admin access first
+  await Account.findByIdAndUpdate(account._id, {
+    $unset: {
+      adminAccessKey: 1,
+      adminAccessKeyExpires: 1
+    }
+  });
+
   const adminKey = generateOTP();
   const redisKey = `admin_access:${adminKey}`;
+
   await redisService.set(
     redisKey,
-    JSON.stringify({ accountId: account.id, adminKey }),
-    { EX: 30 * 60 }, // Set expiration time to 10 minutes
+    JSON.stringify({ accountId: account._id, adminKey }),
+    { EX: 30 * 60 } // 30 minutes
   );
 
   try {
-    await mailService.sendAdminAccessEmail(email, adminKey);
+    await mailService.sendAdminAccessEmail(account.email, adminKey);
   } catch (error) {
     await redisService.del(redisKey);
     throw new BadRequestError("Failed to send admin access email");
@@ -377,35 +412,66 @@ export const requestAdminAccess = async (req: Request, res: Response) => {
 // @access Private (Only for users with admin role)
 export const verifyAdminAccess = async (req: Request, res: Response) => {
   const { adminKey } = req.body;
+  const account = res.locals.account;
 
   if (!adminKey) {
-    throw new BadRequestError("Token is required");
+    throw new BadRequestError("Admin key is required");
+  }
+
+  if (!account || account.role !== 'admin') {
+    throw new UnauthorizedError("Unauthorized");
   }
 
   const redisKey = `admin_access:${adminKey}`;
   const redisData = await redisService.get(redisKey);
 
   if (!redisData) {
-    throw new UnauthorizedError("Invalid token");
+    throw new UnauthorizedError("Invalid or expired admin key");
   }
 
   const { accountId, adminKey: storedAdminKey } = JSON.parse(redisData);
 
-  if (storedAdminKey !== adminKey) {
+  if (storedAdminKey !== adminKey || accountId !== account._id.toString()) {
     throw new UnauthorizedError("Invalid admin key");
   }
 
-  const account = await Account.findById(accountId);
-
-  if (!account) {
-    throw new NotFoundError("Account not found");
-  }
+  // Generate new admin access token
   const adminAccessKey = crypto.randomBytes(32).toString("hex");
-  account.adminAccessKey = adminAccessKey;
-  account.adminAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000); // Set expiration time to 1 hour
-  
-  await account.save();
+  const adminAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await Account.findByIdAndUpdate(accountId, {
+    adminAccessKey,
+    adminAccessKeyExpires
+  });
+
   await redisService.del(redisKey);
 
-  sendSuccessResponse(res, 200, "Admin access verified successfully", { adminAccessKey });
-}
+  // Return updated user data with admin access
+  const updatedAccount = await Account.findById(accountId).select("-password");
+  const response = {
+    ...updatedAccount?.toObject(),
+    hasValidAdminAccess: true
+  };
+
+  sendSuccessResponse(res, 200, "Admin access verified successfully", response);
+};
+
+// @desc Check admin access status
+// @route GET /auth/admin-status
+// @access Private (Admin only)
+export const checkAdminStatus = async (req: Request, res: Response) => {
+  const account = res.locals.account;
+
+  if (!account || account.role !== 'admin') {
+    throw new UnauthorizedError("Unauthorized");
+  }
+
+  const hasValidAdminAccess = account.adminAccessKey &&
+    account.adminAccessKeyExpires &&
+    new Date(account.adminAccessKeyExpires) > new Date();
+
+  sendSuccessResponse(res, 200, "Admin status retrieved", {
+    hasValidAdminAccess,
+    adminAccessKeyExpires: account.adminAccessKeyExpires
+  });
+};

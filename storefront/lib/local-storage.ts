@@ -1,57 +1,50 @@
 "use client";
 
-
 class LocalStorage {
-    accessToken: string;
-    adminAccessKey: string;
-    hasAdminAccess: boolean;
-    constructor() {
-        this.accessToken = "";
-        this.adminAccessKey = "";
-        this.hasAdminAccess = false;
+  private readonly ACCESS_TOKEN_KEY = "accessToken";
+  private readonly ADMIN_ACCESS_KEY = "adminAccessKey";
+  
+
+  get accessToken(): string | null {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem(this.ACCESS_TOKEN_KEY);
+    try {
+      return stored ? JSON.parse(stored).accessToken : null;
+    } catch {
+      return null;
     }
+  }
 
-    authenticateUser(token: string) {
-        if (typeof window !== 'undefined') {
-            this.accessToken = token;
-            localStorage.setItem("accessToken", JSON.stringify({ accessToken: token }));
-        }
-    }
+  get adminAccessKey(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(this.ADMIN_ACCESS_KEY);
+  }
 
-    authorizeAdmin(key: string) {
-        if (typeof window !== 'undefined') {
-            this.adminAccessKey = key;
-            localStorage.setItem("adminAccessKey", key);
-            localStorage.setItem("hasAdminAccess", "true");
-        }
-    }
+  authenticateUser(token: string) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(this.ACCESS_TOKEN_KEY, JSON.stringify({ accessToken: token }));
+  }
 
+  unAuthenticateUser() {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+  }
 
-    unAuthenticateUser() {
-        if (typeof window !== 'undefined') {
-            this.accessToken = "";
-            localStorage.removeItem("accessToken");
-        }
-    }
+  authorizeAdmin(key: string) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(this.ADMIN_ACCESS_KEY, key);
+  }
 
+  unAuthorizeAdmin() {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(this.ADMIN_ACCESS_KEY);
+  }
 
-    unAuthorizeAdmin() {
-        if (typeof window !== 'undefined') {
-            this.adminAccessKey = "";
-            localStorage.removeItem("adminAccessKey");
-            localStorage.removeItem("hasAdminAccess");
-        }
-    }
-
-    clearAll() {
-        if (typeof window !== 'undefined') {
-            this.accessToken = "";
-            this.adminAccessKey = "";
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("adminAccessKey");
-            localStorage.removeItem("hasAdminAccess");
-        }
-    }
+  clearAll() {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+    localStorage.removeItem(this.ADMIN_ACCESS_KEY);
+  }
 }
 
 export const storage = new LocalStorage();

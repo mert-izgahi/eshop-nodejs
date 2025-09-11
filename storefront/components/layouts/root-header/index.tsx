@@ -13,7 +13,10 @@ import UserButton from "@/components/common/user-button";
 
 
 const RootHeader: React.FC = () => {
-  const { isCheckingAuth, isAuthenticated, isAdmin } = useAuth();
+  const { isCheckingAuth, isAuthenticated, user } = useAuth();
+  const isAdmin = React.useMemo(() => {
+    return user?.role === "admin";
+  }, [user?.role]);
   const links = [
     { label: "Home", link: "/" },
     { label: "Products", link: "/products" },

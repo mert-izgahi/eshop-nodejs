@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import Link from 'next/link';
 import {
     Sidebar,
@@ -18,13 +18,15 @@ import UserButton from '@/components/common/user-button'
 import { useAuth } from '@/providers/auth-provider';
 import { DashboardIcon, CategoryIcon, OrdersIcon, CouponIcon, PatnerIcon, PermissionsIcon, StaffIcon, ProductsIcon, SettingsIcon, UsersIcon, BankIcon, StoreIcon, WalletIcon, WithdrawIcon, EarningsIcon, FAQIcon, SupportCenterIcon } from '@/lib/icons';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import SidebarLink from './sidebar-link';
 
 
 
 function AdminSidebar() {
-    const { user, isAdmin } = useAuth();
+    const { user } = useAuth();
+    const isAdmin = useMemo(() => {
+        return user?.role === "admin";
+    }, [user?.role]);
     const pathname = usePathname();
     const adminMainLinks = [
         { label: "Dashboard", link: "/admin", icon: <DashboardIcon />, active: pathname === '/admin' },

@@ -12,7 +12,8 @@
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "seed": "bun run src/seed.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^3.0.0",

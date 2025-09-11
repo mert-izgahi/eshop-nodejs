@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import React from 'react'
-import { AdminAccessVerifyKeySchema, adminAccessVerifyKeySchema } from '@/lib/zod'
+import React from 'react';
+import { AdminAccessVerifyKeySchema, adminAccessVerifyKeySchema } from '@/lib/zod';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -18,73 +18,126 @@ import { Button } from "../ui/button";
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/axios-client';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
+import { toast } from 'sonner';
+import { Loader2, Shield } from 'lucide-react';
 
-function AdminAccessVerifyKeyForm() {
-  const { signOut } = useAuth();
+interface AdminAccessVerifyKeyFormProps {
+  onSuccess?: () => void;
+}
+
+function AdminAccessVerifyKeyForm({ onSuccess }: AdminAccessVerifyKeyFormProps) {
   const form = useForm<AdminAccessVerifyKeySchema>({
     resolver: zodResolver(adminAccessVerifyKeySchema),
     defaultValues: {
       adminKey: ""
     },
   });
+
   const router = useRouter();
+  const { refreshUser } = useAuth();
+
   const { mutate: verifyAdminAccess, isPending } = useMutation({
-    mutationKey: ["request-admin-access-key"],
+    mutationKey: ["verify-admin-access"],
     mutationFn: async (args: AdminAccessVerifyKeySchema) => {
       const response = await api.post("/api/v1/auth/verify-admin-access", args);
-      const data = await response.data;
-      return data;
+      return response.data;
     },
-    onSuccess: (result) => {
-      localStorage.setItem('hasAdminAccess', "true");
-      localStorage.setItem('adminAccessKey', result.data.adminAccessKey);
-      toast.success(result.message);
-
-      router.push('/admin');
+    onSuccess: async (result) => {
+      toast.success(result.message || "Admin access verified successfully!");
+      
+      // Refresh user data to get updated admin access status
+      await refreshUser?.();
+      
+      // Call onSuccess callback if provided
+      onSuccess?.();
+      
+      // Small delay to ensure user data is updated
+      setTimeout(() => {
+        router.push('/admin');
+      }, 500);
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message);
+      const errorMessage = error?.response?.data?.message || "Failed to verify admin access";
+      toast.error(errorMessage);
+      
+      // Clear the form on error
+      form.reset();
     },
-  })
-  const onSubmit = async (data: AdminAccessVerifyKeySchema) => await verifyAdminAccess(data);
+  });
+
+  const onSubmit = async (data: AdminAccessVerifyKeySchema) => {
+    await verifyAdminAccess(data);
+  };
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-6"
+        className="space-y-6"
       >
         <FormField
           control={form.control}
           name="adminKey"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Admin Access Key</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Admin Access Key
+              </FormLabel>
               <FormControl>
-                <Input placeholder="123456" {...field} />
+                <Input 
+                  placeholder="Enter 6-digit code (e.g., 123456)" 
+                  {...field}
+                  disabled={isPending}
+                  className="font-mono text-center text-lg tracking-widest"
+                  maxLength={6}
+                  onChange={(e) => {
+                    // Only allow numbers and limit to 6 digits
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    field.onChange(value);
+                  }}
+                />
               </FormControl>
               <FormDescription>
-                Enter the admin access key provided to you.
+                Enter the 6-digit admin access key sent to your email address.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="flex items-center justify-end">
-          <Button type="submit"
-            className='bg-red-600 text-white hover:bg-red-600 hover:text-white'
+        
+        <div className="flex items-center justify-between pt-4">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => form.reset()}
             disabled={isPending}
           >
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Submit
+            Clear
+          </Button>
+          
+          <Button 
+            type="submit"
+            disabled={isPending || !form.watch('adminKey')}
+            className="min-w-[120px]"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              <>
+                <Shield className="mr-2 h-4 w-4" />
+                Verify Access
+              </>
+            )}
           </Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }
 
-export default AdminAccessVerifyKeyForm
+export default AdminAccessVerifyKeyForm;

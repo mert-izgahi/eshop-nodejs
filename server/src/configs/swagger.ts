@@ -31,6 +31,11 @@ const swaggerConfigs = {
         },
       },
     },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
   responses: {
     UnauthorizedError: {
@@ -154,12 +159,7 @@ const swaggerConfigs = {
       },
     },
   },
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  apis: ["./src/routers/*.ts", "./src/validations/*.ts"],
+  apis: ["./src/routers/*.ts", "./src/schemas/*.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerConfigs);

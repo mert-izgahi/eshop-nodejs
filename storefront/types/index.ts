@@ -16,3 +16,12 @@ export interface IAccount {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface CategoryType {
+  _id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

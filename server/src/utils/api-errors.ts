@@ -31,7 +31,11 @@ class UnauthorizedError extends ApiError {
     super("Unauthorized", message, 401);
   }
 }
-
+class AdminAccessError extends ApiError {
+  constructor(message: string = "AdminAccessError") {
+    super("AdminAccessError", message, 401);
+  }
+}
 class ForbiddenError extends ApiError {
   constructor(message: string = "Forbidden") {
     super("Forbidden", message, 403);
@@ -65,4 +69,5 @@ export {
   ConflictError,
   InternalServerError,
   ValidationError,
+  AdminAccessError
 };

@@ -8,7 +8,7 @@ const SidebarLink = ({ item }: { item: { label: string, link: string, icon: Reac
     return <SidebarMenuItem>
         <SidebarMenuButton asChild className={cn('cursor-pointer rounded-sm',
             {
-                "bg-red-600 text-white hover:bg-red-600 hover:text-white": item.active,
+                "bg-neutral-900 text-white hover:bg-neutral-800 hover:text-white": item.active,
                 "hover:bg-neutral-200 dark:hover:bg-neutral-800": !item.active
             }
         )}>

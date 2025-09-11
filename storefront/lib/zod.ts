@@ -48,9 +48,22 @@ export const adminAccessVerifyKeySchema = z.object({
   adminKey: z.string().min(6, "Key must be at least 6 characters long"),
 });
 
+export const categorySchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters long")
+    .max(100, "Name must be at most 100 characters long"),
+  description: z
+    .string()
+    .min(2, "Description must be at least 2 characters long")
+    .max(1000, "Description must be at most 1000 characters long"),
+  image: z.url("Image must be a valid URL"),
+})
+
 export type SignUpSchema = z.infer<typeof signUpSchema>;
 export type SignInSchema = z.infer<typeof signInSchema>;
 export type AdminAccessRequestSchema = z.infer<typeof adminAccessRequestSchema>;
 export type AdminAccessVerifyKeySchema = z.infer<
   typeof adminAccessVerifyKeySchema
 >;
+export type CategorySchema = z.infer<typeof categorySchema>;
