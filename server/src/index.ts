@@ -16,7 +16,7 @@ import { loggerMiddleware } from "./middlewares/logger.middleware";
 import { systemRouter } from "./routers/system.routes";
 import { authRouter } from "./routers/auth.routers";
 import { categoryRouter } from "./routers/category.routers";
-
+import { storageRouter } from "./routers/storage.router";
 // Services
 import redisService from "./services/redis";
 const app = express();
@@ -36,6 +36,7 @@ app.use(express.static(path.join(__dirname, "uploads")));
 app.use("/api/v1", systemRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/storage", storageRouter);
 
 // Error handlers
 app.use(notFoundMiddleware);

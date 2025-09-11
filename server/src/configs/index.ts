@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import path from "path";
+
 import { type CorsOptions } from "cors";
 const config = dotenv.config({
   path: path.join(__dirname, "..", "..", ".env"),
@@ -111,3 +112,4 @@ export const redisConfig: RedisConfig = {
   host: process.env.REDIS_HOST!,
   port: parseInt(process.env.REDIS_PORT!),
 };
+

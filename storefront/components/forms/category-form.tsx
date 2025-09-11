@@ -22,6 +22,7 @@ import { Loader2 } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { storage } from '@/lib/local-storage';
 import { useAuth } from '@/providers/auth-provider';
+import ImageField from '../common/image-field';
 interface CategoryFormProps {
     mode: "create" | "update"
     onClose?: () => void
@@ -103,12 +104,15 @@ function CategoryForm({ mode, onClose }: CategoryFormProps) {
                         <FormItem>
                             <FormLabel>Image</FormLabel>
                             <FormControl>
-                                <Input placeholder="Category image" {...field} />
+                                <ImageField value={field.value} onChange={field.onChange} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
+                <pre>
+                    {JSON.stringify(form.watch(), null, 2)}
+                </pre>
                 <Button disabled={isCreating} type="submit" className='bg-red-600 hover:bg-red-700 text-white cursor-pointer'>
                     {isCreating && <Loader2 className='animate-spin mr-2' />}
                     {mode === "create" ? "Create" : "Update"}
