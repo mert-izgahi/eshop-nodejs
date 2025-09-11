@@ -2,7 +2,7 @@
 import React from 'react'
 import { Container } from '@/components/common/container'
 import CategoriesTable from '@/components/tables/categories-table'
-import CreateCategoryModal from '@/components/modals/create-category-modal'
+import CreateCategoryModal from '@/components/modals/categories/create-modal'
 import { Separator } from '@/components/ui/separator'
 function CategoriesPage() {
 

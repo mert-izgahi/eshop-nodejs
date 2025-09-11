@@ -1,10 +1,10 @@
 "use client"
 import React, { useState } from 'react'
-import { Button } from '../ui/button'
-import Modal from './modal'
-import CategoryForm from '../forms/category-form';
+import { Button } from '../../ui/button'
+import Modal from '../modal'
+import CategoryForm from '../../forms/category-form';
 
-function CreateCategoryModal() {
+function CreateModal() {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleOpen = () => {
@@ -30,4 +30,4 @@ function CreateCategoryModal() {
     )
 }
 
-export default CreateCategoryModal
+export default CreateModal

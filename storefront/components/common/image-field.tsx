@@ -35,7 +35,6 @@ export default function ImageField({ value, onChange }: ImageFieldProps) {
             if (onChange && data?.url) {
                 onChange(data.url)
             }
-            toast.success("Image uploaded successfully!")
         },
         onError: (error: any) => {
             console.error('Upload error:', error)

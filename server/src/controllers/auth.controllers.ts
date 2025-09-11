@@ -437,7 +437,7 @@ export const verifyAdminAccess = async (req: Request, res: Response) => {
 
   // Generate new admin access token
   const adminAccessKey = crypto.randomBytes(32).toString("hex");
-  const adminAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  const adminAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000 * 12); // 12 hour
 
   await Account.findByIdAndUpdate(accountId, {
     adminAccessKey,

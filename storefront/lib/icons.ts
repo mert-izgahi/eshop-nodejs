@@ -15,7 +15,11 @@ import {
     MessageCircleMore as SupportCenterIcon,
     UserStar as PatnerIcon,
     UserRoundCog as StaffIcon,
-    ShieldUser as PermissionsIcon
+    ShieldUser as PermissionsIcon,
+    Pencil as EditIcon,
+    Trash2 as DeleteIcon,
+    Copy as CopyIcon,
+    CopyCheck as CopiedIcon
 } from 'lucide-react';
 
 export {
@@ -35,5 +39,9 @@ export {
     SupportCenterIcon,
     PatnerIcon,
     StaffIcon,
-    PermissionsIcon
+    PermissionsIcon,
+    EditIcon,
+    DeleteIcon,
+    CopyIcon,
+    CopiedIcon
 };

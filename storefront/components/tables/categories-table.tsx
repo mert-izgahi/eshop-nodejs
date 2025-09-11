@@ -6,10 +6,13 @@ import React from 'react'
 import Datatable from './datatable';
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
-
+import dayjs from 'dayjs'
+import { Button } from '../ui/button'
+import { DeleteIcon, EditIcon,CopyIcon } from '@/lib/icons'
+import { UpdateCategoryModal,DeleteCategoryModal } from '../modals/categories'
 function CategoriesTable() {
     const { data: categories, isLoading, error } = useQuery({
-        queryKey: ['categories'],
+        queryKey: ['get-categories'],
         queryFn: async () => {
             const response = await api.get('/api/v1/categories')
             const data = await response.data
@@ -28,7 +31,7 @@ function CategoriesTable() {
                             <img src={row.original.image || './img-placeholder.svg'}
                                 width={100} height={100}
                                 alt={row.original.name}
-                                className='w-full h-full' 
+                                className='w-full h-full'
                             />
                         </div>
                     )
@@ -42,6 +45,34 @@ function CategoriesTable() {
                 header: 'Name',
                 accessorKey: 'name',
             },
+            {
+                header: 'Description',
+                accessorKey: 'description',
+            },
+            {
+                header: 'Created At',
+                accessorKey: 'createdAt',
+                cell: ({ row }) => {
+                    return (
+                        <div>{dayjs(row.original.createdAt).format('DD/MM/YYYY')}</div>
+                    )
+                }
+            },
+            {
+                header: "Actions",
+                accessorKey: "actions",
+                cell: ({ row }) => {
+                    return (
+                        <div className='flex gap-2'>
+                            <UpdateCategoryModal id={row.original._id} />
+                            <DeleteCategoryModal id={row.original._id} />
+                            <Button size={"icon"} type='button' variant={"ghost"}>
+                                <CopyIcon className='w-4 h-4' />
+                            </Button>
+                        </div>
+                    )
+                }
+            }
         ],
         [],
     )
