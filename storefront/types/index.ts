@@ -1,4 +1,4 @@
-export interface IAccount {
+export interface AccountType {
   _id: string;
   firstName: string;
   lastName: string;
@@ -9,9 +9,6 @@ export interface IAccount {
   isActive?: boolean;
   provider: "credentials" | "google" | "facebook";
   role: "customer" | "staff" | "seller" | "admin";
-  adminAccessKey?: string;
-  adminAccessKeyExpires?: Date;
-  adminAccessKeyExpired?: boolean;
   phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;

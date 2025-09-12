@@ -1,5 +1,6 @@
-import { Router, type Request, type Response } from "express";
+import { Router } from "express";
 import { tryCatchMiddleware } from "../middlewares/try-catch.middleware";
+import { authMiddleware } from "../middlewares/auth.middleware";
 import {
   register,
   login,
@@ -12,11 +13,8 @@ import {
   resendVerificationEmail,
   verifyEmail,
   deleteAccount,
-  requestAdminAccess,
-  verifyAdminAccess,
-  checkAdminStatus
 } from "../controllers/auth.controllers";
-import { authMiddleware, authorizeFor } from "../middlewares/auth.middleware";
+
 
 const router = Router();
 
@@ -41,7 +39,5 @@ router.post(
 );
 router.post("/verify-email", tryCatchMiddleware(verifyEmail));
 router.delete("/me", authMiddleware, tryCatchMiddleware(deleteAccount));
-router.post("/request-admin-access", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(requestAdminAccess));
-router.post("/verify-admin-access", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(verifyAdminAccess));
-router.get("/admin-status", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(checkAdminStatus));
+
 export { router as authRouter };

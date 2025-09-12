@@ -26,6 +26,8 @@ export const SignupForm: React.FC = () => {
       confirmPassword: "",
       acceptPrivacyAndTerms: false,
       acceptMarketing: false,
+      role: "customer",
+      phoneNumber: ""
     },
   });
 

@@ -32,7 +32,7 @@ function RequestAdminAccess() {
   const { mutate: requestAdminAccess, isPending: isRequesting } = useMutation({
     mutationKey: ["request-admin-access-key"],
     mutationFn: async () => {
-      const response = await api.post("/api/v1/auth/request-admin-access");
+      const response = await api.post("/api/v1/admin/request-admin-access");
       return response.data;
     },
     onSuccess: (data) => {
@@ -67,7 +67,7 @@ function RequestAdminAccess() {
       requestAdminAccess();
     }
   };
-  
+
 
   const hasValidAccess = adminStatus?.data?.hasValidAdminAccess;
   const accessExpiresAt = adminStatus?.data?.adminAccessKeyExpires;
@@ -75,7 +75,7 @@ function RequestAdminAccess() {
   if (hasValidAccess) {
     return (
       <Container className='flex flex-col gap-6 py-8'>
-        <Alert className="border-cyan-200 bg-cyan-50 dark:bg-cyan-950 dark:border-cyan-800">
+        <Alert className="">
           <CheckCircle2 className="h-4 w-4" />
           <AlertDescription className="text-cyan-800 dark:text-cyan-200">
             <strong>Admin access is active!</strong>
@@ -86,14 +86,14 @@ function RequestAdminAccess() {
             )}
           </AlertDescription>
         </Alert>
-        
+
         <div className="text-center space-y-4">
           <Shield className="w-16 h-16 text-green-500 mx-auto" />
           <h1 className="text-2xl font-bold">Admin Access Granted</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Your admin access is currently active. You can access all admin features.
           </p>
-          <Button 
+          <Button
             onClick={() => window.location.href = '/admin'}
           >
             Go to Admin Dashboard
@@ -110,7 +110,7 @@ function RequestAdminAccess() {
         <Shield className="w-12 h-12 text-red-600 mx-auto" />
         <h1 className='text-3xl font-bold'>Admin Access Required</h1>
         <p className='text-muted-foreground max-w-2xl mx-auto'>
-          To access admin features, you need to verify your identity. This additional security step 
+          To access admin features, you need to verify your identity. This additional security step
           ensures only authorized administrators can access sensitive operations.
         </p>
       </div>
@@ -118,20 +118,20 @@ function RequestAdminAccess() {
       {/* Step 1: Request Access Key */}
       <div className="border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-semibold">
+          <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center font-semibold">
             1
           </div>
           <h2 className='text-xl font-semibold'>Request Admin Access Key</h2>
         </div>
-        
+
         <p className='text-sm text-muted-foreground ml-11'>
           Click the button below to request an admin access key. We'll send a secure code to your registered email address.
         </p>
 
         {emailSent && (
-          <Alert className="ml-11 border-rose-200 bg-green-50 dark:bg-rose-950 dark:border-rose-800">
+          <Alert className="bg-lime-50 rounded-sm" >
             <Mail className="h-4 w-4" />
-            <AlertDescription className="text-rose-800 dark:text-rose-200">
+            <AlertDescription className='text-xs'>
               <strong>Email sent successfully!</strong> Check your inbox for the admin access key.
             </AlertDescription>
           </Alert>
@@ -165,12 +165,12 @@ function RequestAdminAccess() {
       {/* Step 2: Verify Access Key */}
       <div className="border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-semibold">
+          <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center font-semibold">
             2
           </div>
           <h2 className='text-xl font-semibold'>Verify Admin Access Key</h2>
         </div>
-        
+
         <p className='text-sm text-muted-foreground ml-11'>
           Enter the 6-digit code sent to your email to verify your admin access.
         </p>

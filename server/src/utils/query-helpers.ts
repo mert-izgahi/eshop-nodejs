@@ -44,9 +44,11 @@ export const getAccountsQuery = (req: Request): IQuery => {
 
 
     if (req.query.search) {
-        queryObj.firstName = { $regex: req.query.search, $options: "i" };
-        queryObj.lastName = { $regex: req.query.search, $options: "i" };
-        queryObj.email = { $regex: req.query.search, $options: "i" };
+        queryObj.$or = [
+            { firstName: { $regex: req.query.search, $options: "i" } },
+            { lastName: { $regex: req.query.search, $options: "i" } },
+            { email: { $regex: req.query.search, $options: "i" } }
+        ];
     }
 
     return {

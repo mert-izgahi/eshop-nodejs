@@ -9,7 +9,13 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-function TableSortSelect() {
+
+interface Props {
+  sortFieldKey: string;
+  sortFieldLabel: string;
+}
+
+function TableSortSelect({ sortFieldKey, sortFieldLabel }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -19,8 +25,8 @@ function TableSortSelect() {
   const options: { key: string; value: string; label: string }[] = [
     { key: "createdAt", value: "asc", label: "Created At ↑" },
     { key: "createdAt", value: "desc", label: "Created At ↓" },
-    { key: "name", value: "asc", label: "Name ↑" },
-    { key: "name", value: "desc", label: "Name ↓" },
+    { key: sortFieldKey, value: "asc", label: `${sortFieldLabel} ↑`},
+    { key: sortFieldKey, value: "desc", label: `${sortFieldLabel} ↓`},
   ];
 
   const handleChange = (key: string, value: string) => {

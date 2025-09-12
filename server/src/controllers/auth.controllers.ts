@@ -18,6 +18,7 @@ import { log } from "../utils/logger";
 import mailService from "../services/mail";
 import redisService from "../services/redis";
 import crypto from "crypto";
+import AdminProfile from "../models/admin.model";
 
 // @desc Register a new account
 // @route POST /auth/register
@@ -72,15 +73,21 @@ export const login = async (req: Request, res: Response) => {
 
   // Always include fresh admin permission status
   const accountObj = account.toObject();
-  const hasValidAdminAccess = account.role === 'admin' &&
-    account.adminAccessKey &&
-    account.adminAccessKeyExpires &&
-    new Date(account.adminAccessKeyExpires) > new Date();
+  // const hasValidAdminAccess = account.role === 'admin' &&
+  //   account.adminAccessKey &&
+  //   account.adminAccessKeyExpires &&
+  //   new Date(account.adminAccessKeyExpires) > new Date();
+
+  // const hasValidSellerAccess = account.role === 'seller' &&
+  //   account.sellerAccessKey &&
+  //   account.sellerAccessKeyExpires &&
+  //   new Date(account.sellerAccessKeyExpires) > new Date();
 
   const response = {
     accessToken,
     ...accountObj,
-    hasValidAdminAccess
+    // hasValidAdminAccess,
+    // hasValidSellerAccess
   };
 
   sendSuccessResponse(res, 200, "Login successful", response);
@@ -93,10 +100,22 @@ export const logout = async (req: Request, res: Response) => {
   // Clear admin access key on logout for security
   const account = res.locals.account;
   if (account && account.role === 'admin') {
-    await Account.findByIdAndUpdate(account._id, {
+    await AdminProfile.findByIdAndUpdate(account._id, {
       $unset: {
         adminAccessKey: 1,
         adminAccessKeyExpires: 1
+      }
+    });
+  }
+
+
+
+  // Clear seller access key on logout for security
+  if (account && account.role === 'seller') {
+    await Account.findByIdAndUpdate(account._id, {
+      $unset: {
+        sellerAccessKey: 1,
+        sellerAccessKeyExpires: 1
       }
     });
   }
@@ -114,14 +133,19 @@ export const getMe = async (req: Request, res: Response) => {
   const account = res.locals.account;
 
   // Always return fresh admin permission status
-  const hasValidAdminAccess = account.role === 'admin' &&
-    account.adminAccessKey &&
-    account.adminAccessKeyExpires &&
-    new Date(account.adminAccessKeyExpires) > new Date();
+  // const hasValidAdminAccess = account.role === 'admin' &&
+  //   account.adminAccessKey &&
+  //   account.adminAccessKeyExpires &&
+  //   new Date(account.adminAccessKeyExpires) > new Date();
+
+
+  // const hasValidSellerAccess = account.role === 'seller' &&
+  //   account.sellerAccessKey &&
+  //   account.sellerAccessKeyExpires &&
+  //   new Date(account.sellerAccessKeyExpires) > new Date();
 
   const accountData = {
     ...account.toObject(),
-    hasValidAdminAccess
   };
 
   sendSuccessResponse(res, 200, "Account details", accountData);
@@ -163,11 +187,17 @@ export const updatePassword = async (req: Request, res: Response) => {
     throw new UnauthorizedError("Invalid current password");
   }
 
-  // Clear admin access on password change for security
-  if (currentAccount.role === 'admin') {
-    currentAccount.adminAccessKey = undefined;
-    currentAccount.adminAccessKeyExpires = undefined;
-  }
+  // // Clear admin access on password change for security
+  // if (currentAccount.role === 'admin') {
+  //   currentAccount.adminAccessKey = undefined;
+  //   currentAccount.adminAccessKeyExpires = undefined;
+  // }
+
+  // // Clear seller access on password change for security
+  // if (currentAccount.role === 'seller') {
+  //   currentAccount.sellerAccessKey = undefined;
+  //   currentAccount.sellerAccessKeyExpires = undefined;
+  // }
 
   currentAccount.password = newPassword;
   await currentAccount.save();
@@ -251,11 +281,17 @@ export const resetPassword = async (req: Request, res: Response) => {
     throw new UnauthorizedError("Invalid token");
   }
 
-  // Clear admin access on password reset for security
-  if (account.role === 'admin') {
-    account.adminAccessKey = undefined;
-    account.adminAccessKeyExpires = undefined;
-  }
+  // // Clear admin access on password reset for security
+  // if (account.role === 'admin') {
+  //   account.adminAccessKey = undefined;
+  //   account.adminAccessKeyExpires = undefined;
+  // }
+
+  // // Clear seller access on password reset for security
+  // if (account.role === 'seller') {
+  //   account.sellerAccessKey = undefined;
+  //   account.sellerAccessKeyExpires = undefined;
+  // }
 
   account.password = newPassword;
   await account.save();
@@ -349,11 +385,17 @@ export const deleteAccount = async (req: Request, res: Response) => {
   }
 
   account.isActive = false;
-  // Clear admin access keys when deactivating
-  if (account.role === 'admin') {
-    account.adminAccessKey = undefined;
-    account.adminAccessKeyExpires = undefined;
-  }
+  // // Clear admin access keys when deactivating
+  // if (account.role === 'admin') {
+  //   account.adminAccessKey = undefined;
+  //   account.adminAccessKeyExpires = undefined;
+  // }
+
+  // // Clear seller access keys when deactivating
+  // if (account.role === 'seller') {
+  //   account.sellerAccessKey = undefined;
+  //   account.sellerAccessKeyExpires = undefined;
+  // }
 
   await account.save();
   res.clearCookie("access_token");
@@ -362,116 +404,120 @@ export const deleteAccount = async (req: Request, res: Response) => {
 };
 
 
-// @desc Request admin access
-// @route POST /auth/request-admin-access
-// @access Private (Only for users with admin role)
-export const requestAdminAccess = async (req: Request, res: Response) => {
+
+
+export const requestSellerAccess = async (req: Request, res: Response) => {
   const account = res.locals.account;
 
   if (!account) {
     throw new BadRequestError("Account not found");
   }
 
-  if (account.role !== 'admin') {
-    throw new UnauthorizedError("You are not authorized to request admin access");
+  if (account.role !== 'seller') {
+    throw new UnauthorizedError("You are not authorized to request seller access");
   }
 
   if (!account.isActive) {
     throw new UnauthorizedError("Account is not active");
   }
 
-  // Clear any existing admin access first
+  // Clear any existing seller access first
   await Account.findByIdAndUpdate(account._id, {
     $unset: {
-      adminAccessKey: 1,
-      adminAccessKeyExpires: 1
+      sellerAccessKey: 1,
+      sellerAccessKeyExpires: 1
     }
   });
 
-  const adminKey = generateOTP();
-  const redisKey = `admin_access:${adminKey}`;
+  const sellerKey = generateOTP();
+  const redisKey = `seller_access:${sellerKey}`;
 
   await redisService.set(
     redisKey,
-    JSON.stringify({ accountId: account._id, adminKey }),
+    JSON.stringify({ accountId: account._id, sellerKey }),
     { EX: 30 * 60 } // 30 minutes
   );
 
   try {
-    await mailService.sendAdminAccessEmail(account.email, adminKey);
+    await mailService.sendSellerAccessEmail(account.email, sellerKey);
   } catch (error) {
     await redisService.del(redisKey);
-    throw new BadRequestError("Failed to send admin access email");
+    throw new BadRequestError("Failed to send seller access email");
   }
 
-  sendSuccessResponse(res, 200, "Admin access email sent successfully", true);
+  sendSuccessResponse(res, 200, "Seller access email sent successfully", true);
 };
 
-// @desc Verify admin access
-// @route POST /auth/verify-admin-access
-// @access Private (Only for users with admin role)
-export const verifyAdminAccess = async (req: Request, res: Response) => {
-  const { adminKey } = req.body;
+
+
+
+// @desc Verify seller access
+// @route POST /auth/verify-seller-access
+// @access Private (Only for users with seller role)
+export const verifySellerAccess = async (req: Request, res: Response) => {
+  const { sellerKey } = req.body;
   const account = res.locals.account;
 
-  if (!adminKey) {
-    throw new BadRequestError("Admin key is required");
+  if (!sellerKey) {
+    throw new BadRequestError("Seller key is required");
   }
 
-  if (!account || account.role !== 'admin') {
+  if (!account || account.role !== 'seller') {
     throw new UnauthorizedError("Unauthorized");
   }
 
-  const redisKey = `admin_access:${adminKey}`;
+  const redisKey = `seller_access:${sellerKey}`;
   const redisData = await redisService.get(redisKey);
 
   if (!redisData) {
-    throw new UnauthorizedError("Invalid or expired admin key");
+    throw new UnauthorizedError("Invalid or expired seller key");
   }
 
-  const { accountId, adminKey: storedAdminKey } = JSON.parse(redisData);
+  const { accountId, sellerKey: storedSellerKey } = JSON.parse(redisData);
 
-  if (storedAdminKey !== adminKey || accountId !== account._id.toString()) {
-    throw new UnauthorizedError("Invalid admin key");
+  if (storedSellerKey !== sellerKey || accountId !== account._id.toString()) {
+    throw new UnauthorizedError("Invalid seller key");
   }
 
-  // Generate new admin access token
-  const adminAccessKey = crypto.randomBytes(32).toString("hex");
-  const adminAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000 * 12); // 12 hour
+  // Generate new seller access token
+  const sellerAccessKey = crypto.randomBytes(32).toString("hex");
+  const sellerAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000 * 12); // 12 hour
 
   await Account.findByIdAndUpdate(accountId, {
-    adminAccessKey,
-    adminAccessKeyExpires
+    sellerAccessKey,
+    sellerAccessKeyExpires
   });
 
   await redisService.del(redisKey);
 
-  // Return updated user data with admin access
+  // Return updated user data with seller access
   const updatedAccount = await Account.findById(accountId).select("-password");
   const response = {
     ...updatedAccount?.toObject(),
-    hasValidAdminAccess: true
+    hasValidSellerAccess: true
   };
 
-  sendSuccessResponse(res, 200, "Admin access verified successfully", response);
+  sendSuccessResponse(res, 200, "Seller access verified successfully", response);
 };
 
-// @desc Check admin access status
-// @route GET /auth/admin-status
-// @access Private (Admin only)
-export const checkAdminStatus = async (req: Request, res: Response) => {
+
+
+// @desc Check seller access status
+// @route GET /auth/seller-status
+// @access Private (Seller only)
+export const checkSellerStatus = async (req: Request, res: Response) => {
   const account = res.locals.account;
 
-  if (!account || account.role !== 'admin') {
+  if (!account || account.role !== 'seller') {
     throw new UnauthorizedError("Unauthorized");
   }
 
-  const hasValidAdminAccess = account.adminAccessKey &&
-    account.adminAccessKeyExpires &&
-    new Date(account.adminAccessKeyExpires) > new Date();
+  const hasValidSellerAccess = account.sellerAccessKey &&
+    account.sellerAccessKeyExpires &&
+    new Date(account.sellerAccessKeyExpires) > new Date();
 
-  sendSuccessResponse(res, 200, "Admin status retrieved", {
-    hasValidAdminAccess,
-    adminAccessKeyExpires: account.adminAccessKeyExpires
+  sendSuccessResponse(res, 200, "Seller status retrieved", {
+    hasValidSellerAccess,
+    sellerAccessKeyExpires: account.sellerAccessKeyExpires
   });
 };

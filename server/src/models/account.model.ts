@@ -1,5 +1,11 @@
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
+import { log } from "../utils/logger";
+import AdminProfile from "./admin.model";
+import SellerProfile from "./seller.model";
+import StaffProfile from "./staff.model";
+import CustomerProfile from "./customer.model";
+
 interface AccountType extends Document {
   firstName: string;
   lastName: string;
@@ -11,10 +17,8 @@ interface AccountType extends Document {
   deletedAt?: Date;
   provider: "credentials" | "google" | "facebook";
   role: "customer" | "staff" | "seller" | "admin";
-  adminAccessKey?: string;
-  adminAccessKeyExpires?: Date;
-  adminAccessKeyExpired?: boolean;
   phoneNumber?: string;
+
   createdAt: Date;
   updatedAt: Date;
 
@@ -24,6 +28,8 @@ interface AccountType extends Document {
 
 interface AccountModel extends Model<AccountType> {
   softDelete(id: string): Promise<AccountType | null>;
+  createProfileForNewUser(account: AccountType): Promise<AccountType>;
+  cleanupProfilesForAccount(accountId: string): Promise<void>;
 }
 
 
@@ -39,9 +45,7 @@ const accountSchema = new mongoose.Schema<AccountType, AccountModel>(
     verified: { type: Boolean, default: false },
     provider: { type: String, required: true, default: "credentials" },
     role: { type: String, required: true, default: "customer" },
-    adminAccessKey: { type: String },
-    adminAccessKeyExpires: { type: Date },
-    phoneNumber: { type: String },
+    phoneNumber: { type: String, required: true },
   },
   {
     timestamps: true,
@@ -62,9 +66,37 @@ accountSchema.pre("save", async function (next) {
   next();
 });
 
-accountSchema.virtual("adminAccessKeyExpired").get(function () {
-  return this.adminAccessKeyExpires && this.adminAccessKeyExpires < new Date();
-});
+
+accountSchema.statics.createProfileForNewUser = async function (account: AccountType) {
+  const role = account.role;
+  const newProfile = {
+    account: account._id,
+  }
+
+  switch (role) {
+    case "admin":
+      return await AdminProfile.create(newProfile);
+    case "seller":
+      return await SellerProfile.create(newProfile);
+    case "staff":
+      return await StaffProfile.create(newProfile);
+    case "customer":
+      return await CustomerProfile.create(newProfile);
+    default:
+      return null;
+  }
+};
+
+accountSchema.statics.cleanupProfilesForAccount = async function (accountId: string) {
+  await AdminProfile.deleteMany({ account: accountId });
+  await SellerProfile.deleteMany({ account: accountId });
+  await StaffProfile.deleteMany({ account: accountId });
+  await CustomerProfile.deleteMany({ account: accountId });
+};
+
+
+
+
 
 accountSchema.methods.comparePassword = async function (
   password: string,
@@ -74,7 +106,7 @@ accountSchema.methods.comparePassword = async function (
 
 
 accountSchema.statics.softDelete = async function (id: string) {
-  return await this.findByIdAndUpdate(id, { isActive: false,deletedAt: new Date() }, { new: true  });
+  return await this.findByIdAndUpdate(id, { isActive: false, deletedAt: new Date() }, { new: true });
 };
 
 const Account = mongoose.model<AccountType, AccountModel>("Account", accountSchema);

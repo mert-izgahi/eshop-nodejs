@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios-client'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { CategoryType, IAccount, IPagination, IResponseWithPagination } from '@/types'
+import {  useQuery } from '@tanstack/react-query'
+import { AccountType, IPagination, IResponseWithPagination } from '@/types'
 import { ColumnDef } from '@tanstack/react-table'
 import React, { useMemo } from 'react'
 import Datatable from './datatable';
@@ -35,7 +35,7 @@ function CustomersTable() {
         return searchParams.get('page') || '1'
     }, [searchParams]);
 
-    const { data: customers, isLoading, refetch } = useQuery<IResponseWithPagination<IAccount>>({
+    const { data: customers, isLoading, refetch } = useQuery<IResponseWithPagination<AccountType>>({
         queryKey: ['get-customers', search, sortBy, sortType, page],
         queryFn: async () => {
             const response = await api.get(`/api/v1/users/customers?search=${search}&sortBy=${sortBy}&sortType=${sortType}&page=${page}`,)
@@ -45,7 +45,7 @@ function CustomersTable() {
     });
 
 
-    const columns = React.useMemo<ColumnDef<IAccount>[]>(
+    const columns = React.useMemo<ColumnDef<AccountType>[]>(
         () => [
             {
                 header: "Image",
@@ -110,7 +110,7 @@ function CustomersTable() {
                     <TableSearchForm />
                 </div>
                 <div>
-                    <TableSortSelect />
+                    <TableSortSelect sortFieldKey='firstName' sortFieldLabel='First Name' />
                 </div>
             </div>
             <Datatable columns={columns} data={customers?.results || []} loading={isLoading} />

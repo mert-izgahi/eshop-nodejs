@@ -17,6 +17,8 @@ const RootHeader: React.FC = () => {
   const isAdmin = React.useMemo(() => {
     return user?.role === "admin";
   }, [user?.role]);
+
+  
   const links = [
     { label: "Home", link: "/" },
     { label: "Products", link: "/products" },

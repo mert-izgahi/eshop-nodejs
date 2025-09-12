@@ -29,6 +29,8 @@ export const signUpSchema = z
     acceptMarketing: z.boolean().refine((value) => value, {
       message: "You must accept the marketing terms",
     }),
+    role: z.enum(["seller", "customer"]),
+    phoneNumber: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { IAccount } from "@/types";
+import { AccountType } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/axios-client";
 import { SignInSchema, SignUpSchema } from "@/lib/zod";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { storage } from "@/lib/local-storage";
 
 interface AuthContextType {
-    user: IAccount | null;
+    user: AccountType | null;
     isAuthenticated: boolean;
     isCheckingAuth: boolean;
     isSigningIn: boolean;
@@ -24,7 +24,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<IAccount | null>(null);
+    const [user, setUser] = useState<AccountType | null>(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const queryClient = useQueryClient();
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // 🔑 Get current user
-    const getCurrentUser = useQuery<IAccount>({
+    const getCurrentUser = useQuery<AccountType>({
         queryKey: ["user"],
         queryFn: async () => {
             const token = storage.accessToken;

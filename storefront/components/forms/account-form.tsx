@@ -15,22 +15,20 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { isActiveOptions, isVerifiedOptions, roleOptions } from '@/lib/lookups';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/axios-client';
-import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { Textarea } from '../ui/textarea';
-import { useAuth } from '@/providers/auth-provider';
 import ImageField from '../common/image-field';
 interface Props {
     id: string
 }
-function CustomerForm({ id }: Props) {
+function AccountForm({ id }: Props) {
     const { data: customer, isLoading } = useQuery({
-        queryKey: ["get-customer", id],
+        queryKey: ["get-account", id],
         queryFn: async () => {
-            const response = await api.get(`/api/v1/users/${id}`)
+            const response = await api.get(`/api/v1/admin/accounts/${id}`)
             const { data } = response.data;
             return data
         },
@@ -39,12 +37,12 @@ function CustomerForm({ id }: Props) {
 
     const { isPending: isUpdating, mutateAsync: updateCustomer } = useMutation({
         mutationFn: async (args: UpdateCustomerSchema) => {
-            const response = await api.put(`/api/v1/users/${id}`, args);
+            const response = await api.put(`/api/v1/admin/accounts/${id}`, args);
             const { data } = await response.data;
             return data
         },
         onSuccess: () => {
-            toast.success("Customer updated successfully")
+            toast.success("Account updated successfully")
         },
         onError: () => {
             toast.error("Something went wrong")
@@ -92,7 +90,7 @@ function CustomerForm({ id }: Props) {
                         <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                                <Input placeholder="john.doe@example.com" {...field} />
+                                <Input readOnly placeholder="john.doe@example.com" {...field} className='cursor-not-allowed bg-neutral-50' />
                             </FormControl>
                             <FormDescription>
                                 Email that used to create the account.
@@ -261,4 +259,4 @@ function CustomerForm({ id }: Props) {
     )
 }
 
-export default CustomerForm
+export default AccountForm

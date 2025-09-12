@@ -40,14 +40,11 @@ function AdminAccessVerifyKeyForm({ onSuccess }: AdminAccessVerifyKeyFormProps) 
   const { mutate: verifyAdminAccess, isPending } = useMutation({
     mutationKey: ["verify-admin-access"],
     mutationFn: async (args: AdminAccessVerifyKeySchema) => {
-      const response = await api.post("/api/v1/auth/verify-admin-access", args);
+      const response = await api.post("/api/v1/admin/verify-admin-access", args);
       return response.data;
     },
     onSuccess: async (result) => {
       toast.success(result.message || "Admin access verified successfully!");
-      
-      // Refresh user data to get updated admin access status
-      await refreshUser?.();
       
       // Call onSuccess callback if provided
       onSuccess?.();
@@ -120,7 +117,7 @@ function AdminAccessVerifyKeyForm({ onSuccess }: AdminAccessVerifyKeyFormProps) 
           <Button 
             type="submit"
             disabled={isPending || !form.watch('adminKey')}
-            className="min-w-[120px]"
+            className="min-w-[120px] bg-red-600 hover:bg-red-700"
           >
             {isPending ? (
               <>

@@ -4,6 +4,7 @@ import { type Request, type Response, type NextFunction } from "express";
 import { log } from "../utils/logger";
 import { JwtService, type IPayload } from "../services/jwt";
 import Account from "../models/account.model";
+import AdminProfile from "../models/admin.model";
 
 export const authMiddleware = async (
   req: Request,
@@ -80,55 +81,23 @@ export const adminAccessMiddleware = async (
       throw new AdminAccessError("Admin role required");
     }
 
-    if (!account.adminAccessKey) {
-      throw new AdminAccessError("Admin access key required");
-    }
+    const profile = await AdminProfile.findOne({ account: account._id });
 
-    if (!account.adminAccessKeyExpires) {
-      throw new AdminAccessError("Admin access key expired");
+    if (!profile) {
+      throw new AdminAccessError("Admin profile not found");
     }
-
     const now = new Date();
-    const expiresAt = new Date(account.adminAccessKeyExpires);
+    const expiresAt = new Date(profile.adminAccessKeyExpires);
     
     if (expiresAt <= now) {
       // Clean up expired key
-      await Account.findByIdAndUpdate(account._id, {
+      await AdminProfile.findOne({ account: account._id }, {
         $unset: { 
           adminAccessKey: 1,
           adminAccessKeyExpires: 1 
         }
       });
       throw new AdminAccessError("Admin access key expired");
-    }
-
-    next();
-  } catch (error) {
-    log.error(error);
-    next(error);
-  }
-};
-
-// Optional: Middleware to refresh admin access if it's about to expire
-export const refreshAdminAccessIfNeeded = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const account = res.locals.account;
-    
-    if (account && account.role === 'admin' && account.adminAccessKeyExpires) {
-      const now = new Date();
-      const expiresAt = new Date(account.adminAccessKeyExpires);
-      const timeUntilExpiry = expiresAt.getTime() - now.getTime();
-      const fifteenMinutes = 15 * 60 * 1000;
-
-      // If less than 15 minutes remaining, add a header to inform frontend
-      if (timeUntilExpiry > 0 && timeUntilExpiry < fifteenMinutes) {
-        res.setHeader('X-Admin-Access-Expiring-Soon', 'true');
-        res.setHeader('X-Admin-Access-Expires-At', expiresAt.toISOString());
-      }
     }
 
     next();

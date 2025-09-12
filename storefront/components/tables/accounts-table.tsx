@@ -1,20 +1,21 @@
 import { api } from '@/lib/axios-client'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { CategoryType, IPagination, IResponseWithPagination } from '@/types'
+import { useQuery } from '@tanstack/react-query'
+import { AccountType, IPagination, IResponseWithPagination } from '@/types'
 import { ColumnDef } from '@tanstack/react-table'
 import React, { useMemo } from 'react'
 import Datatable from './datatable';
-import { Loader2 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { Button } from '../ui/button'
-import { CopyIcon } from '@/lib/icons'
-import { UpdateCategoryModal, DeleteCategoryModal } from '../modals/categories'
-import { toast } from 'sonner'
+import { DetailsIcon } from '@/lib/icons'
 import TableSearchForm from './datatable/table-search-form'
 import { useSearchParams } from 'next/navigation'
 import TableSortSelect from './datatable/table-sort-select'
 import TablePagination from './datatable/table-pagination'
-function CategoriesTable() {
+import { DeleteUserModal } from '../modals/users'
+import Link from 'next/link'
+import { Badge } from '../ui/badge'
+import { cn } from '@/lib/utils'
+function AccountsTable() {
     const searchParams = useSearchParams();
 
     const search = useMemo(() => {
@@ -33,42 +34,27 @@ function CategoriesTable() {
         return searchParams.get('page') || '1'
     }, [searchParams]);
 
-    const { data: categories, isLoading, refetch } = useQuery<IResponseWithPagination<CategoryType>>({
-        queryKey: ['get-categories', search, sortBy, sortType, page],
+    const { data: accounts, isLoading, refetch } = useQuery<IResponseWithPagination<AccountType>>({
+        queryKey: ['get-accounts', search, sortBy, sortType, page],
         queryFn: async () => {
-            const response = await api.get(`/api/v1/categories?search=${search}&sortBy=${sortBy}&sortType=${sortType}&page=${page}`,)
+            const response = await api.get(`/api/v1/admin/accounts?search=${search}&sortBy=${sortBy}&sortType=${sortType}&page=${page}`,)
             const { data } = await response.data;
             return data
         },
     });
 
-    const { mutateAsync: duplicateCategory, isPending: isDuplicating } = useMutation({
-        mutationKey: ["duplicate-category"],
-        mutationFn: async (id: string) => {
-            const response = await api.post(`/api/v1/categories/${id}/duplicate`);
-            const { data } = await response.data;
-            return data
-        },
-        onSuccess: async () => {
-            toast.success("Category duplicated");
-            await refetch()
-        },
-        onError: (error) => {
-            console.log(error)
-        }
-    })
 
-    const columns = React.useMemo<ColumnDef<CategoryType>[]>(
+    const columns = React.useMemo<ColumnDef<AccountType>[]>(
         () => [
             {
                 header: "Image",
-                accessorKey: 'image',
+                accessorKey: 'profilePicture',
                 cell: ({ row }) => {
                     return (
                         <div className='w-10 h-10'>
-                            <img src={row.original.image || './img-placeholder.svg'}
+                            <img src={row.original.profilePicture || './img-placeholder.svg'}
                                 width={100} height={100}
-                                alt={row.original.name}
+                                alt={row.original.firstName}
                                 className='w-full h-full'
                             />
                         </div>
@@ -80,16 +66,20 @@ function CategoriesTable() {
                 accessorKey: '_id',
             },
             {
-                header: 'Name',
-                accessorKey: 'name',
+                header: 'First Name',
+                accessorKey: 'firstName',
             },
             {
-                header: 'Description',
-                accessorKey: 'description',
+                header: 'Last Name',
+                accessorKey: 'lastName',
+            },
+            {
+                header: 'Verified',
+                accessorKey: 'verified',
                 cell: ({ row }) => {
-                    return (
-                        <div className='w-40 truncate'>{row.original.description}</div>
-                    )
+                    return <Badge className={cn(row.original.verified ? 'bg-lime-600' : 'bg-neutral-600')}>
+                        {row.original.verified ? 'Yes' : 'No'}
+                    </Badge>
                 }
             },
             {
@@ -107,12 +97,11 @@ function CategoriesTable() {
                 cell: ({ row }) => {
                     return (
                         <div className='flex gap-2'>
-                            <UpdateCategoryModal id={row.original._id} />
-                            <DeleteCategoryModal id={row.original._id} />
-                            <Button size={"icon"} type='button' disabled={isDuplicating} variant={"ghost"} onClick={() => duplicateCategory(row.original._id)}>
-                                {
-                                    isDuplicating ? <Loader2 className="animate-spin w-4 h-4" /> : <CopyIcon className='w-4 h-4' />
-                                }
+                            <DeleteUserModal id={row.original._id} />
+                            <Button size={"icon"} type='button' variant={"ghost"} asChild>
+                                <Link href={`/admin/customers/${row.original._id}`}>
+                                    <DetailsIcon className='w-4 h-4' />
+                                </Link>
                             </Button>
                         </div>
                     )
@@ -129,16 +118,16 @@ function CategoriesTable() {
                     <TableSearchForm />
                 </div>
                 <div>
-                    <TableSortSelect sortFieldKey='name' sortFieldLabel='Name' />
+                    <TableSortSelect sortFieldKey='firstName' sortFieldLabel='First Name' />
                 </div>
             </div>
-            <Datatable columns={columns} data={categories?.results || []} loading={isLoading} />
+            <Datatable columns={columns} data={accounts?.results || []} loading={isLoading} />
 
             <div className="flex">
-                <TablePagination {...categories?.pagination as IPagination} />
+                <TablePagination {...accounts?.pagination as IPagination} />
             </div>
         </div>
     )
 }
 
-export default CategoriesTable
+export default AccountsTable
