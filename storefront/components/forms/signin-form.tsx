@@ -13,12 +13,8 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { signInSchema, SignInSchema } from "@/lib/zod";
-import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import axios from "axios";
 import { useAuth } from "@/providers/auth-provider";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
 export const SigninForm: React.FC = () => {
   const form = useForm<SignInSchema>({

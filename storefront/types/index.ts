@@ -25,3 +25,23 @@ export interface CategoryType {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
+export interface IPagination {
+    page: number;
+    limit: number;
+    totalResults: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }
+
+export interface IResponseWithPagination<T> {
+  results: T[];
+  pagination: IPagination
+}

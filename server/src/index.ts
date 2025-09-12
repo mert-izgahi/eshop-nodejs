@@ -17,6 +17,7 @@ import { systemRouter } from "./routers/system.routes";
 import { authRouter } from "./routers/auth.routers";
 import { categoryRouter } from "./routers/category.routers";
 import { storageRouter } from "./routers/storage.router";
+import { usersRouter } from "./routers/users.router";
 // Services
 import redisService from "./services/redis";
 const app = express();
@@ -37,6 +38,7 @@ app.use("/api/v1", systemRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/storage", storageRouter);
+app.use("/api/v1/users", usersRouter);
 
 // Error handlers
 app.use(notFoundMiddleware);

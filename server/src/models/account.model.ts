@@ -1,4 +1,4 @@
-import mongoose, { Document } from "mongoose";
+import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 interface AccountType extends Document {
   firstName: string;
@@ -8,6 +8,7 @@ interface AccountType extends Document {
   password?: string;
   verified?: boolean;
   isActive?: boolean;
+  deletedAt?: Date;
   provider: "credentials" | "google" | "facebook";
   role: "customer" | "staff" | "seller" | "admin";
   adminAccessKey?: string;
@@ -21,7 +22,12 @@ interface AccountType extends Document {
   generateResetPasswordToken(): Promise<string>;
 }
 
-const accountSchema = new mongoose.Schema<AccountType>(
+interface AccountModel extends Model<AccountType> {
+  softDelete(id: string): Promise<AccountType | null>;
+}
+
+
+const accountSchema = new mongoose.Schema<AccountType, AccountModel>(
   {
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
@@ -29,6 +35,7 @@ const accountSchema = new mongoose.Schema<AccountType>(
     profilePicture: { type: String },
     password: { type: String },
     isActive: { type: Boolean, default: true },
+    deletedAt: { type: Date },
     verified: { type: Boolean, default: false },
     provider: { type: String, required: true, default: "credentials" },
     role: { type: String, required: true, default: "customer" },
@@ -65,6 +72,11 @@ accountSchema.methods.comparePassword = async function (
   return await bcrypt.compare(password, this.password);
 };
 
-const Account = mongoose.model<AccountType>("Account", accountSchema);
+
+accountSchema.statics.softDelete = async function (id: string) {
+  return await this.findByIdAndUpdate(id, { isActive: false,deletedAt: new Date() }, { new: true  });
+};
+
+const Account = mongoose.model<AccountType, AccountModel>("Account", accountSchema);
 
 export default Account;

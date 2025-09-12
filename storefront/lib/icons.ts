@@ -19,7 +19,8 @@ import {
     Pencil as EditIcon,
     Trash2 as DeleteIcon,
     Copy as CopyIcon,
-    CopyCheck as CopiedIcon
+    CopyCheck as CopiedIcon,
+    Eye as DetailsIcon
 } from 'lucide-react';
 
 export {
@@ -43,5 +44,6 @@ export {
     EditIcon,
     DeleteIcon,
     CopyIcon,
-    CopiedIcon
+    CopiedIcon,
+    DetailsIcon
 };

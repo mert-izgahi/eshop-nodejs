@@ -60,6 +60,18 @@ export const categorySchema = z.object({
   image: z.url("Image must be a valid URL"),
 })
 
+export const updateCustomerSchema = z.object({
+  firstName: z.string().min(2, "First name must be at least 2 characters long").max(100, "First name must be at most 100 characters long"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters long").max(100, "Last name must be at most 100 characters long"),
+  email: z.email("Email must be a valid email address"),
+  profilePicture: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  role: z.string(),
+  password: z.string().optional(),
+  verified: z.boolean(),
+  isActive: z.boolean(),
+})
+
 export type SignUpSchema = z.infer<typeof signUpSchema>;
 export type SignInSchema = z.infer<typeof signInSchema>;
 export type AdminAccessRequestSchema = z.infer<typeof adminAccessRequestSchema>;
@@ -67,3 +79,4 @@ export type AdminAccessVerifyKeySchema = z.infer<
   typeof adminAccessVerifyKeySchema
 >;
 export type CategorySchema = z.infer<typeof categorySchema>;
+export type UpdateCustomerSchema = z.infer<typeof updateCustomerSchema>;
