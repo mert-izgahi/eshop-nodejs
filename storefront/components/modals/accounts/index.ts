@@ -1,5 +1,5 @@
 import DeleteModal from "./delete-modal";
 
 export {
-    DeleteModal as DeleteUserModal
+    DeleteModal as DeleteAccountModal
 }

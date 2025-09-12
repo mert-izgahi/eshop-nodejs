@@ -14,9 +14,11 @@ interface AuthContextType {
     isCheckingAuth: boolean;
     isSigningIn: boolean;
     isSigningUp: boolean;
+    isSigningUpAsPartner: boolean;
     isSigningOut: boolean;
     signIn: (credentials: SignInSchema) => Promise<void>;
     signUp: (userData: SignUpSchema) => Promise<void>;
+    signUpAsPartner: (userData: SignUpSchema) => Promise<void>;
     signOut: () => Promise<void>;
     refreshUser: () => Promise<any>;
 }
@@ -51,6 +53,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { mutateAsync: register, isPending: isSigningUp } = useMutation({
         mutationFn: async (userData: SignUpSchema) => {
             const { data } = await api.post("/api/v1/auth/register", userData);
+            return data.data;
+        },
+        onSuccess: (data) => {
+            storage.authenticateUser(data.accessToken);
+            setUser(data);
+            setIsAuthenticated(true);
+            queryClient.setQueryData(["user"], data);
+            toast.success("Registered successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error?.response?.data?.message || "Registration failed");
+        },
+    });
+
+    const { mutateAsync: registerAsPartner, isPending: isSigningUpAsPartner } = useMutation({
+        mutationFn: async (userData: SignUpSchema) => {
+            const { data } = await api.post("/api/v1/auth/register-as-partner", userData);
             return data.data;
         },
         onSuccess: (data) => {
@@ -132,9 +151,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 isCheckingAuth,
                 isSigningIn,
                 isSigningUp,
+                isSigningUpAsPartner,
                 isSigningOut,
                 signIn: login,
                 signUp: register,
+                signUpAsPartner: registerAsPartner,
                 signOut: logout,
                 refreshUser: () => getCurrentUser.refetch(),
             }}

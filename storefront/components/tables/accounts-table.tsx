@@ -11,7 +11,7 @@ import TableSearchForm from './datatable/table-search-form'
 import { useSearchParams } from 'next/navigation'
 import TableSortSelect from './datatable/table-sort-select'
 import TablePagination from './datatable/table-pagination'
-import { DeleteUserModal } from '../modals/users'
+import { DeleteAccountModal } from '../modals/accounts'
 import Link from 'next/link'
 import { Badge } from '../ui/badge'
 import { cn } from '@/lib/utils'
@@ -97,9 +97,9 @@ function AccountsTable() {
                 cell: ({ row }) => {
                     return (
                         <div className='flex gap-2'>
-                            <DeleteUserModal id={row.original._id} />
+                            <DeleteAccountModal id={row.original._id} />
                             <Button size={"icon"} type='button' variant={"ghost"} asChild>
-                                <Link href={`/admin/customers/${row.original._id}`}>
+                                <Link href={`/admin/accounts/${row.original._id}`}>
                                     <DetailsIcon className='w-4 h-4' />
                                 </Link>
                             </Button>

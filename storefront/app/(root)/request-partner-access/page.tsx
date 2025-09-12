@@ -1,0 +1,201 @@
+"use client";
+
+import { Container } from '@/components/common/container';
+import AdminAccessVerifyKeyForm from '@/components/forms/admin-access-verify-key-form';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { api } from '@/lib/axios-client';
+import { useAuth } from '@/providers/auth-provider';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Loader2, Mail, Shield, Clock, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import PartnerAccessVerifyKeyForm from '@/components/forms/partner-access-verify-key-form';
+
+function RequestAdminAccess() {
+  const { user, refreshUser } = useAuth();
+  const [emailSent, setEmailSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  // Check current admin access status
+  const { data: partnerStatus, refetch: refetchStatus } = useQuery<{ hasValidPartnerAccess: boolean, partnerAccessKeyExpires: string, onboarding: boolean }>({
+    queryKey: ["partner-status"],
+    queryFn: async () => {
+      const response = await api.get("/api/v1/partner/check-partner-status");
+      const { data } = await response.data;
+      return data;
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: user?.role === 'admin',
+  });
+
+  // Request partner access mutation
+  const { mutate: requestPartnerAccess, isPending: isRequesting } = useMutation({
+    mutationKey: ["request-partner-access-key"],
+    mutationFn: async () => {
+      const response = await api.post("/api/v1/partner/request-admin-access");
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setEmailSent(true);
+      setCountdown(30); // 30 second cooldown
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to request partner access");
+    },
+  });
+
+  // Countdown effect for request cooldown
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  // Reset email sent status when countdown ends
+  useEffect(() => {
+    if (countdown === 0) {
+      setEmailSent(false);
+    }
+  }, [countdown]);
+
+  const handleRequestAccess = () => {
+    if (countdown === 0) {
+      requestPartnerAccess();
+    }
+  };
+
+
+  const hasValidAccess = partnerStatus?.hasValidPartnerAccess;
+  const accessExpiresAt = partnerStatus?.partnerAccessKeyExpires;
+
+  if (hasValidAccess) {
+    return (
+      <Container className='flex flex-col gap-6 py-8'>
+        <Alert className="">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription className="text-cyan-800 dark:text-cyan-200">
+            <strong>Partner access is active!</strong>
+            {accessExpiresAt && (
+              <div className="text-sm mt-1">
+                Expires: {new Date(accessExpiresAt).toLocaleString()}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+
+        <div className="text-center space-y-4">
+          <Shield className="w-16 h-16 text-green-500 mx-auto" />
+          <h1 className="text-2xl font-bold">Partner Access Granted</h1>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Your partner access is currently active. You can access all partner features.
+          </p>
+          <Button
+            onClick={() => window.location.href = '/partner'}
+          >
+            Go to Partner Dashboard
+          </Button>
+        </div>
+      </Container>
+    );
+  }
+
+  return (
+    <Container className='flex flex-col gap-6 py-8'>
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <Shield className="w-12 h-12 text-red-600 mx-auto" />
+        <h1 className='text-3xl font-bold'>Partner Access Required</h1>
+        <p className='text-muted-foreground max-w-2xl mx-auto'>
+          To access partner features, you need to verify your identity. This additional security step
+          ensures only authorized partners can access sensitive operations.
+        </p>
+      </div>
+
+      {/* Step 1: Request Access Key */}
+      <div className="border rounded-lg p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center font-semibold">
+            1
+          </div>
+          <h2 className='text-xl font-semibold'>Request Partner Access Key</h2>
+        </div>
+
+        <p className='text-sm text-muted-foreground ml-11'>
+          Click the button below to request an partner access key. We'll send a secure code to your registered email address.
+        </p>
+
+        {emailSent && (
+          <Alert className="bg-lime-50 rounded-sm" >
+            <Mail className="h-4 w-4" />
+            <AlertDescription className='text-xs'>
+              <strong>Email sent successfully!</strong> Check your inbox for the partner access key.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="ml-11">
+          <Button
+            disabled={isRequesting || countdown > 0}
+            onClick={handleRequestAccess}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            {isRequesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {countdown > 0 ? (
+              <>
+                <Clock className="mr-2 h-4 w-4" />
+                Wait {countdown}s
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                {emailSent ? 'Resend Access Key' : 'Send Access Key'}
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Step 2: Verify Access Key */}
+      <div className="border rounded-lg p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center font-semibold">
+            2
+          </div>
+          <h2 className='text-xl font-semibold'>Verify Partner Access Key</h2>
+        </div>
+
+        <p className='text-sm text-muted-foreground ml-11'>
+          Enter the 6-digit code sent to your email to verify your partner access.
+        </p>
+
+        <div className="ml-11">
+          <PartnerAccessVerifyKeyForm onSuccess={() => {
+            refreshUser?.();
+            refetchStatus();
+          }} />
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Help Section */}
+      <div className="text-center space-y-2">
+        <h3 className="font-medium">Need Help?</h3>
+        <p className='text-sm text-muted-foreground max-w-md mx-auto'>
+          If you're experiencing issues with admin access verification, please contact our support team for assistance.
+        </p>
+      </div>
+    </Container>
+  );
+}
+
+export default RequestAdminAccess;

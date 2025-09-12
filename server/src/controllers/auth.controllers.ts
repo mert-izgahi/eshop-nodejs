@@ -19,26 +19,69 @@ import mailService from "../services/mail";
 import redisService from "../services/redis";
 import crypto from "crypto";
 import AdminProfile from "../models/admin.model";
+import PartnerProfile from "../models/partner.model";
+import CustomerProfile from "../models/customer.model";
 
 // @desc Register a new account
 // @route POST /auth/register
 // @access Public
 export const register = async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName } = req.body;
+  const { email, password, firstName, lastName, phoneNumber } = req.body;
 
   const existingAccount = await Account.findOne({ email });
   if (existingAccount) {
     throw new ConflictError("Email already in use");
   }
 
-  const account = new Account({
+  const account = await Account.create({
     firstName,
     lastName,
     email,
     password,
+    phoneNumber,
+    role: "user",
   });
 
-  await account.save();
+
+  // Create Customer Profile
+  await CustomerProfile.create({
+    accountId: account._id,
+  });
+
+  await mailService.sendWelcomeEmail(account.email);
+
+  const accessToken = JwtService.generateAccessToken({ id: account._id } as IPayload);
+  setAccessToken(res, accessToken);
+  const response = { accessToken, ...account.toObject() }
+  sendSuccessResponse(res, 201, "Account created successfully", response);
+};
+
+export const registerAsPartner = async (req: Request, res: Response) => {
+  const { email, password, firstName, lastName, phoneNumber } = req.body;
+
+  const existingAccount = await Account.findOne({ email });
+  if (existingAccount) {
+    throw new ConflictError("Email already in use");
+  }
+
+  // Create Account
+  const account = await Account.create({
+    firstName,
+    lastName,
+    email,
+    password,
+    phoneNumber,
+    role: "partner",
+  });
+  console.log(account);
+  
+  // Create Seller Profile
+  await PartnerProfile.create({
+    accountId: account._id,
+    onboarding: true,
+    verified: false
+  });
+
 
   await mailService.sendWelcomeEmail(account.email);
 
@@ -401,123 +444,4 @@ export const deleteAccount = async (req: Request, res: Response) => {
   res.clearCookie("access_token");
 
   sendSuccessResponse(res, 200, "Account deleted successfully", true);
-};
-
-
-
-
-export const requestSellerAccess = async (req: Request, res: Response) => {
-  const account = res.locals.account;
-
-  if (!account) {
-    throw new BadRequestError("Account not found");
-  }
-
-  if (account.role !== 'seller') {
-    throw new UnauthorizedError("You are not authorized to request seller access");
-  }
-
-  if (!account.isActive) {
-    throw new UnauthorizedError("Account is not active");
-  }
-
-  // Clear any existing seller access first
-  await Account.findByIdAndUpdate(account._id, {
-    $unset: {
-      sellerAccessKey: 1,
-      sellerAccessKeyExpires: 1
-    }
-  });
-
-  const sellerKey = generateOTP();
-  const redisKey = `seller_access:${sellerKey}`;
-
-  await redisService.set(
-    redisKey,
-    JSON.stringify({ accountId: account._id, sellerKey }),
-    { EX: 30 * 60 } // 30 minutes
-  );
-
-  try {
-    await mailService.sendSellerAccessEmail(account.email, sellerKey);
-  } catch (error) {
-    await redisService.del(redisKey);
-    throw new BadRequestError("Failed to send seller access email");
-  }
-
-  sendSuccessResponse(res, 200, "Seller access email sent successfully", true);
-};
-
-
-
-
-// @desc Verify seller access
-// @route POST /auth/verify-seller-access
-// @access Private (Only for users with seller role)
-export const verifySellerAccess = async (req: Request, res: Response) => {
-  const { sellerKey } = req.body;
-  const account = res.locals.account;
-
-  if (!sellerKey) {
-    throw new BadRequestError("Seller key is required");
-  }
-
-  if (!account || account.role !== 'seller') {
-    throw new UnauthorizedError("Unauthorized");
-  }
-
-  const redisKey = `seller_access:${sellerKey}`;
-  const redisData = await redisService.get(redisKey);
-
-  if (!redisData) {
-    throw new UnauthorizedError("Invalid or expired seller key");
-  }
-
-  const { accountId, sellerKey: storedSellerKey } = JSON.parse(redisData);
-
-  if (storedSellerKey !== sellerKey || accountId !== account._id.toString()) {
-    throw new UnauthorizedError("Invalid seller key");
-  }
-
-  // Generate new seller access token
-  const sellerAccessKey = crypto.randomBytes(32).toString("hex");
-  const sellerAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000 * 12); // 12 hour
-
-  await Account.findByIdAndUpdate(accountId, {
-    sellerAccessKey,
-    sellerAccessKeyExpires
-  });
-
-  await redisService.del(redisKey);
-
-  // Return updated user data with seller access
-  const updatedAccount = await Account.findById(accountId).select("-password");
-  const response = {
-    ...updatedAccount?.toObject(),
-    hasValidSellerAccess: true
-  };
-
-  sendSuccessResponse(res, 200, "Seller access verified successfully", response);
-};
-
-
-
-// @desc Check seller access status
-// @route GET /auth/seller-status
-// @access Private (Seller only)
-export const checkSellerStatus = async (req: Request, res: Response) => {
-  const account = res.locals.account;
-
-  if (!account || account.role !== 'seller') {
-    throw new UnauthorizedError("Unauthorized");
-  }
-
-  const hasValidSellerAccess = account.sellerAccessKey &&
-    account.sellerAccessKeyExpires &&
-    new Date(account.sellerAccessKeyExpires) > new Date();
-
-  sendSuccessResponse(res, 200, "Seller status retrieved", {
-    hasValidSellerAccess,
-    sellerAccessKeyExpires: account.sellerAccessKeyExpires
-  });
 };

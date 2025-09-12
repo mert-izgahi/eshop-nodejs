@@ -17,11 +17,9 @@ import { Checkbox } from "../ui/checkbox";
 import Link from "next/link";
 import { useAuth } from "@/providers/auth-provider";
 import { useRouter } from "next/navigation";
-import { RadioGroup } from "../ui/radio-group";
-import RadioField from "../common/radio-field";
 
 
-export const SignupForm = () => {
+export const SignupAsPartnerForm = () => {
   const form = useForm<SignUpSchema>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -32,15 +30,15 @@ export const SignupForm = () => {
       confirmPassword: "",
       acceptPrivacyAndTerms: false,
       acceptMarketing: false,
-      role: "customer",
-      phoneNumber: ""
+      role: "partner",
+      phoneNumber: "",
     },
   });
 
-  const { signUp } = useAuth();
+  const { signUpAsPartner } = useAuth();
   const router = useRouter();
   const onSubmit = async (data: SignUpSchema) => {
-    await signUp(data);
+    await signUpAsPartner(data);
     router.push("/");
   };
 
@@ -50,26 +48,6 @@ export const SignupForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6"
       >
-        {/* <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <RadioField value={field.value} onChange={field.onChange}
-                  options={[
-                    { value: "customer", label: "Customer" },
-                    { value: "seller", label: "Partner" },
-                  ]}
-                />
-              </FormControl>
-              <FormDescription className="text-sm">
-                {form.watch("role") === "customer" ? "You can purchase products and services." : "You can sell products and services and receive orders."}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> */}
         <FormField
           control={form.control}
           name="firstName"

@@ -1,7 +1,7 @@
 import mongoose, { Document } from "mongoose";
 
 interface AdminType extends Document {
-    account: mongoose.Types.ObjectId;
+    accountId: mongoose.Types.ObjectId;
     adminAccessKey: string;
     adminAccessKeyExpires: Date;
     adminAccessKeyExpired: boolean;
@@ -12,7 +12,7 @@ interface AdminType extends Document {
 }
 
 const adminSchema = new mongoose.Schema<AdminType>({
-    account: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true, unique: true },
+    accountId: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true, unique: true },
     adminAccessKey: { type: String },
     adminAccessKeyExpires: { type: Date},
     createdAt: { type: Date, default: Date.now },

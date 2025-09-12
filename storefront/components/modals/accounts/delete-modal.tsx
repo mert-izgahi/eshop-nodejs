@@ -23,23 +23,23 @@ function DeleteModal({ id }: DeleteModalProps) {
     };
     const queryClient = useQueryClient();
     const { mutateAsync: deleteCategory, isPending: isDeleting } = useMutation({
-        mutationKey: ["delete-user", id],
+        mutationKey: ["delete-account", id],
         mutationFn: async () => {
-            const response = await api.delete(`/api/v1/users/${id}`)
+            const response = await api.delete(`/api/v1/admin/accounts/${id}`)
             const { data } = response.data;
-            return data
+            return data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["get-customers"],
+                queryKey: ["get-accounts"],
             })
-            toast.success("User deleted");
+            toast.success("Account deleted");
             setTimeout(() => {
                 handleClose();
             }, 2000);
         },
         onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to delete user");
+            toast.error(error?.response?.data?.message || "Failed to delete account");
         }
     })
 
@@ -54,8 +54,8 @@ function DeleteModal({ id }: DeleteModalProps) {
                 isOpen={isOpen}
                 onClose={handleClose}
             >
-                <h1>Delete Customer</h1>
-                <p>Are you sure you want to delete this customer?</p>
+                <h1>Delete Account</h1>
+                <p>Are you sure you want to delete this account?</p>
                 <div className="flex items-center gap-2">
                     <Button type='button' onClick={handleClose} variant={"outline"} className='w-full'>Close</Button>
                     <Button disabled={isDeleting} onClick={() => deleteCategory()}

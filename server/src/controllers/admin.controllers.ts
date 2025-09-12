@@ -1,6 +1,5 @@
 import { type Request, type Response } from "express";
 import AdminProfile from "../models/admin.model";
-import { log } from "../utils/logger";
 import mailService from "../services/mail";
 import redisService from "../services/redis";
 import crypto from "crypto";
@@ -12,6 +11,7 @@ import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/api-
 import Category from "../models/category.model";
 import { getAccountsQuery } from "../utils/query-helpers";
 import Account from "../models/account.model";
+import CustomerProfile from "../models/customer.model";
 
 // ======================================================================================================
 // Profile
@@ -36,7 +36,7 @@ export const requestAdminAccess = async (req: Request, res: Response) => {
     }
 
     // Clear any existing admin access first
-    await AdminProfile.findOneAndUpdate({ account: account._id }, {
+    await AdminProfile.findOneAndUpdate({ accountId: account._id }, {
         $unset: {
             adminAccessKey: 1,
             adminAccessKeyExpires: 1
@@ -94,7 +94,7 @@ export const verifyAdminAccess = async (req: Request, res: Response) => {
     const adminAccessKey = crypto.randomBytes(32).toString("hex");
     const adminAccessKeyExpires = new Date(Date.now() + 60 * 60 * 1000 * 24 * 30);  // 30 days
 
-    await AdminProfile.findOneAndUpdate({ account: account._id }, {
+    await AdminProfile.findOneAndUpdate({ accountId: account._id }, {
         adminAccessKey,
         adminAccessKeyExpires
     });
@@ -114,7 +114,7 @@ export const checkAdminStatus = async (req: Request, res: Response) => {
         throw new UnauthorizedError("Unauthorized");
     }
 
-    const profile = await AdminProfile.findOne({ account: account._id });
+    const profile = await AdminProfile.findOne({ accountId: account._id });
 
     if (!profile) {
         throw new BadRequestError("Admin profile not found");
@@ -253,9 +253,36 @@ export const adminUpdateAccount = async (req: Request, res: Response) => {
 export const adminDeleteAccount = async (req: Request, res: Response) => {
     const { id } = req.params;
     const account = await Account.softDelete(id);
-    
+
     if (!account) {
         throw new NotFoundError("User not found");
     }
     sendSuccessResponse(res, 200, "User deleted successfully", true);
+};
+
+// ======================================================================================================
+// Customer Profiles
+// ======================================================================================================
+
+export const adminGetCustomers = async (req: Request, res: Response) => {
+    const { page, limit, skip, queryObj, sortBy, sortType } = getAccountsQuery(req);
+    const users = await CustomerProfile.find({ ...queryObj }).skip(skip).limit(limit).
+        sort({ [sortBy as string]: sortType });
+
+    const totalResults = await CustomerProfile.countDocuments(queryObj);
+    const totalPages = Math.ceil(totalResults / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+    const response = {
+        results: users,
+        pagination: {
+            page,
+            limit,
+            totalResults,
+            totalPages,
+            hasNextPage,
+            hasPrevPage
+        }
+    }
+    sendSuccessResponse(res, 200, "Customers fetched successfully", response);
 };

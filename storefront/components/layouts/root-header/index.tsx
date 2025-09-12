@@ -18,7 +18,10 @@ const RootHeader: React.FC = () => {
     return user?.role === "admin";
   }, [user?.role]);
 
-  
+  const isPartner = React.useMemo(() => {
+    return user?.role === "partner";
+  }, [user?.role]);
+
   const links = [
     { label: "Home", link: "/" },
     { label: "Products", link: "/products" },
@@ -98,7 +101,9 @@ const RootHeader: React.FC = () => {
               ))}
             </div>
             <div className="flex items-center gap-x-2">
-              <HeaderLink label="Start Selling" link="/start-selling" />
+              {
+                isPartner && <HeaderLink label="Partner Panel" link="/partner" />
+              }
               {
                 isAdmin && <HeaderLink label="Admin Panel" link="/admin" />
               }

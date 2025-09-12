@@ -7,7 +7,7 @@ import Category from "./models/category.model";
 
 import AdminProfile from './models/admin.model';
 import CustomerProfile from './models/customer.model';
-import SellerProfile from './models/seller.model';
+import SellerProfile from './models/partner.model';
 import StaffProfile from './models/staff.model';
 
 const ACCOUNTS_COUNT = 100;

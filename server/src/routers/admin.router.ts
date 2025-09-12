@@ -3,7 +3,7 @@ import { tryCatchMiddleware } from "../middlewares/try-catch.middleware";
 import { authMiddleware, authorizeFor } from "../middlewares/auth.middleware";
 import {
     checkAdminStatus, requestAdminAccess, verifyAdminAccess, adminCreateCategory, adminUpdateCategory, adminDeleteCategory, adminDuplicateCategory,
-    adminGetAccounts, adminGetAccount, adminDeleteAccount, adminUpdateAccount
+    adminGetAccounts, adminGetAccount, adminDeleteAccount, adminUpdateAccount, adminGetCustomers
 } from "../controllers/admin.controllers";
 
 const router = Router();
@@ -27,5 +27,8 @@ router.get("/accounts", authMiddleware, authorizeFor(["admin"]), tryCatchMiddlew
 router.get("/accounts/:id", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(adminGetAccount));
 router.delete("/accounts/:id", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(adminDeleteAccount));
 router.put("/accounts/:id", authMiddleware, authorizeFor(["admin"]), tryCatchMiddleware(adminUpdateAccount));
+
+// Customers
+router.get("/customers",authMiddleware,authorizeFor(["admin"]),tryCatchMiddleware(adminGetCustomers));
 
 export { router as adminRouter };

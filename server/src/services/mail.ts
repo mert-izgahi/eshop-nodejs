@@ -63,12 +63,12 @@ class MailService {
     console.log("Message sent: %s", info.messageId);
   };
 
-  sendSellerAccessEmail = async (email: string, sellerKey: string) => {
+  sendPartnerAccessEmail = async (email: string, sellerKey: string) => {
     const info = await this.transporter.sendMail({
       from: mailConfig.from,
       to: email,
-      subject: "Seller Access Granted",
-      html: `<p>Your seller access key is: <strong>${sellerKey}</strong></p>`,
+      subject: "Partner Access Granted",
+      html: `<p>Your partner access key is: <strong>${sellerKey}</strong></p>`,
     });
 
     console.log("Message sent: %s", info.messageId);

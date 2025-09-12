@@ -2,38 +2,12 @@
 import { FacebookAuthButton } from "@/components/buttons/facebook-auth-button";
 import { GoogleAuthButton } from "@/components/buttons/google-auth-button";
 import { Container } from "@/components/common/container";
-import { SignupForm } from "@/components/forms/signup-form";
+import { SignupAsPartnerForm } from "@/components/forms/signup-as-partner-form";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 
-export default function SignupPage() {
-
-  const [role, setRole] = useState<"customer" | "seller" | null>(null);
-
-
-  const title = useMemo(() => {
-    switch (role) {
-      case "customer":
-        return "Sign Up as a Customer";
-      case "seller":
-        return "Sign Up as a Seller";
-      default:
-        return "Sign Up";
-    }
-  }, [role]);
-
-  const description = useMemo(() => {
-    switch (role) {
-      case "customer":
-        return "Create an account to access your personalized shopping experience.";
-      case "seller":
-        return "Create an account to sell your products.";
-      default:
-        return "Create an account to access your personalized shopping experience.";
-    }
-  }, [role]);
-
+export default function SignupAsPartnerPage() {
   return (
     <Container className="flex flex-col gap-6 py-12">
       <div className="flex flex-col gap-4 max-w-xl mx-auto">
@@ -42,7 +16,7 @@ export default function SignupPage() {
           Create an account to access your personalized shopping experience.
         </p>
 
-        <SignupForm />
+        <SignupAsPartnerForm />
 
         {/*AuthFooter*/}
         <div className="flex flex-col gap-y-4">
@@ -54,9 +28,6 @@ export default function SignupPage() {
           <div className="w-full flex flex-col gap-y-4">
             <Button asChild variant={"outline"}>
               <Link href="/sign-in">Already have an account?</Link>
-            </Button>
-            <Button asChild variant={"outline"}>
-              <Link href="/partner/sign-up">Sign Up as a Partner</Link>
             </Button>
             <Button asChild variant={"outline"}>
               <Link href="/forgot-password">Forgot password?</Link>

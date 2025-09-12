@@ -1,10 +1,5 @@
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
-import { log } from "../utils/logger";
-import AdminProfile from "./admin.model";
-import SellerProfile from "./seller.model";
-import StaffProfile from "./staff.model";
-import CustomerProfile from "./customer.model";
 
 interface AccountType extends Document {
   firstName: string;
@@ -28,8 +23,6 @@ interface AccountType extends Document {
 
 interface AccountModel extends Model<AccountType> {
   softDelete(id: string): Promise<AccountType | null>;
-  createProfileForNewUser(account: AccountType): Promise<AccountType>;
-  cleanupProfilesForAccount(accountId: string): Promise<void>;
 }
 
 
@@ -65,36 +58,6 @@ accountSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
-
-
-accountSchema.statics.createProfileForNewUser = async function (account: AccountType) {
-  const role = account.role;
-  const newProfile = {
-    account: account._id,
-  }
-
-  switch (role) {
-    case "admin":
-      return await AdminProfile.create(newProfile);
-    case "seller":
-      return await SellerProfile.create(newProfile);
-    case "staff":
-      return await StaffProfile.create(newProfile);
-    case "customer":
-      return await CustomerProfile.create(newProfile);
-    default:
-      return null;
-  }
-};
-
-accountSchema.statics.cleanupProfilesForAccount = async function (accountId: string) {
-  await AdminProfile.deleteMany({ account: accountId });
-  await SellerProfile.deleteMany({ account: accountId });
-  await StaffProfile.deleteMany({ account: accountId });
-  await CustomerProfile.deleteMany({ account: accountId });
-};
-
-
 
 
 

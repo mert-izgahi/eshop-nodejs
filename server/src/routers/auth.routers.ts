@@ -3,6 +3,7 @@ import { tryCatchMiddleware } from "../middlewares/try-catch.middleware";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import {
   register,
+  registerAsPartner,
   login,
   getMe,
   updateMe,
@@ -19,6 +20,7 @@ import {
 const router = Router();
 
 router.post("/register", tryCatchMiddleware(register));
+router.post("/register-as-partner", tryCatchMiddleware(registerAsPartner));
 router.post("/login", tryCatchMiddleware(login));
 router.get("/me", authMiddleware, tryCatchMiddleware(getMe));
 router.post("/logout", authMiddleware, tryCatchMiddleware(logout));

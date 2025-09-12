@@ -8,7 +8,7 @@ export interface AccountType {
   verified?: boolean;
   isActive?: boolean;
   provider: "credentials" | "google" | "facebook";
-  role: "customer" | "staff" | "seller" | "admin";
+  role: "customer" | "staff" | "partner" | "admin";
   phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -30,15 +30,23 @@ export interface IResponse {
 }
 
 export interface IPagination {
-    page: number;
-    limit: number;
-    totalResults: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  }
+  page: number;
+  limit: number;
+  totalResults: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
 
 export interface IResponseWithPagination<T> {
   results: T[];
   pagination: IPagination
+}
+
+export interface CustomerType {
+  _id: string
+  accountId: string
+  account: AccountType
+  createdAt: Date
+  updatedAt: Date
 }

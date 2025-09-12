@@ -45,6 +45,7 @@ function AdminSidebar() {
 
     const adminUsersLinks = [
         { label: "Accounts", link: "/admin/accounts", icon: <UsersIcon />, active: pathname === '/admin/accounts' || pathname?.startsWith('/admin/accounts/') },
+        { label: "Customers", link: "/admin/customers", icon: <UsersIcon />, active: pathname === '/admin/customers' || pathname?.startsWith('/admin/customers/') },
         { label: "Partners", link: "/admin/partners", icon: <PatnerIcon />, active: pathname === '/admin/partners' || pathname?.startsWith('/admin/partners/') },
         { label: "Staff", link: "/admin/staffs", icon: <StaffIcon />, active: pathname === '/admin/staffs' || pathname?.startsWith('/admin/staffs/') },
         { label: "Permissions", link: "/admin/permissions", icon: <PermissionsIcon />, active: pathname === '/admin/permissions' || pathname?.startsWith('/admin/permissions/') },

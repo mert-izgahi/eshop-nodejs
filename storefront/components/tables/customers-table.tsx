@@ -1,20 +1,17 @@
 import { api } from '@/lib/axios-client'
-import {  useQuery } from '@tanstack/react-query'
-import { AccountType, IPagination, IResponseWithPagination } from '@/types'
+import { useQuery } from '@tanstack/react-query'
+import { CustomerType, IPagination, IResponseWithPagination } from '@/types'
 import { ColumnDef } from '@tanstack/react-table'
 import React, { useMemo } from 'react'
 import Datatable from './datatable';
-import { Loader2 } from 'lucide-react'
 import dayjs from 'dayjs'
+
 import { Button } from '../ui/button'
-import { CopyIcon, DetailsIcon } from '@/lib/icons'
-import { UpdateCategoryModal, DeleteCategoryModal } from '../modals/categories'
-import { toast } from 'sonner'
+import { DetailsIcon } from '@/lib/icons'
 import TableSearchForm from './datatable/table-search-form'
 import { useSearchParams } from 'next/navigation'
 import TableSortSelect from './datatable/table-sort-select'
 import TablePagination from './datatable/table-pagination'
-import { DeleteUserModal } from '../modals/users'
 import Link from 'next/link'
 function CustomersTable() {
     const searchParams = useSearchParams();
@@ -35,44 +32,28 @@ function CustomersTable() {
         return searchParams.get('page') || '1'
     }, [searchParams]);
 
-    const { data: customers, isLoading, refetch } = useQuery<IResponseWithPagination<AccountType>>({
+    const { data: customers, isLoading, refetch } = useQuery<IResponseWithPagination<CustomerType>>({
         queryKey: ['get-customers', search, sortBy, sortType, page],
         queryFn: async () => {
-            const response = await api.get(`/api/v1/users/customers?search=${search}&sortBy=${sortBy}&sortType=${sortType}&page=${page}`,)
+            const response = await api.get(`/api/v1/admin/customers?search=${search}&sortBy=${sortBy}&sortType=${sortType}&page=${page}`,)
             const { data } = await response.data;
             return data
         },
     });
 
 
-    const columns = React.useMemo<ColumnDef<AccountType>[]>(
+    const columns = React.useMemo<ColumnDef<CustomerType>[]>(
         () => [
-            {
-                header: "Image",
-                accessorKey: 'profilePicture',
-                cell: ({ row }) => {
-                    return (
-                        <div className='w-10 h-10'>
-                            <img src={row.original.profilePicture || './img-placeholder.svg'}
-                                width={100} height={100}
-                                alt={row.original.firstName}
-                                className='w-full h-full'
-                            />
-                        </div>
-                    )
-                }
-            },
             {
                 header: 'ID',
                 accessorKey: '_id',
             },
             {
-                header: 'First Name',
-                accessorKey: 'firstName',
-            },
-            {
-                header: 'Last Name',
-                accessorKey: 'lastName',
+                header: "Account",
+                accessorKey: "accountId",
+                cell: ({ row }) => {
+                    return <Link className='hover:underline' href={`/admin/accounts/${row.original._id}`}>{row.original.account.firstName} {row.original.account.lastName}</Link>
+                }
             },
             {
                 header: 'Created At',
@@ -89,7 +70,6 @@ function CustomersTable() {
                 cell: ({ row }) => {
                     return (
                         <div className='flex gap-2'>
-                            <DeleteUserModal id={row.original._id} />
                             <Button size={"icon"} type='button' variant={"ghost"} asChild>
                                 <Link href={`/admin/customers/${row.original._id}`}>
                                     <DetailsIcon className='w-4 h-4' />

@@ -29,7 +29,7 @@ export const signUpSchema = z
     acceptMarketing: z.boolean().refine((value) => value, {
       message: "You must accept the marketing terms",
     }),
-    role: z.enum(["seller", "customer"]),
+    role: z.enum(["partner", "customer"]),
     phoneNumber: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -37,13 +37,10 @@ export const signUpSchema = z
     path: ["confirmPassword"],
   });
 
+
 export const signInSchema = z.object({
   email: z.email("Email must be a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters long"),
-});
-
-export const adminAccessRequestSchema = z.object({
-  email: z.email("Email must be a valid email address"),
 });
 
 export const adminAccessVerifyKeySchema = z.object({
@@ -68,17 +65,25 @@ export const updateCustomerSchema = z.object({
   email: z.email("Email must be a valid email address"),
   profilePicture: z.string().optional(),
   phoneNumber: z.string().optional(),
-  role: z.string(),
+  role: z.string().min(2, "Role must be at least 2 characters long"),
   password: z.string().optional(),
   verified: z.boolean(),
   isActive: z.boolean(),
-})
+});
+
+
+export const partnerAccessVerifyKeySchema = z.object({
+  partnerKey: z.string().min(6, "Key must be at least 6 characters long"),
+});
 
 export type SignUpSchema = z.infer<typeof signUpSchema>;
 export type SignInSchema = z.infer<typeof signInSchema>;
-export type AdminAccessRequestSchema = z.infer<typeof adminAccessRequestSchema>;
+
 export type AdminAccessVerifyKeySchema = z.infer<
   typeof adminAccessVerifyKeySchema
 >;
 export type CategorySchema = z.infer<typeof categorySchema>;
 export type UpdateCustomerSchema = z.infer<typeof updateCustomerSchema>;
+export type PartnerAccessVerifyKeySchema = z.infer<
+  typeof partnerAccessVerifyKeySchema
+>;
