@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import React, { useEffect, useMemo } from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AdminSidebar } from '@/components/layouts/sidebars';
 import { Button } from '@/components/ui/button';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/axios-client';
+import PartnerSidebar from '@/components/layouts/sidebars/partner-sidebar';
 interface AuthLayoutProps {
     children: React.ReactNode;
 }
@@ -40,7 +40,7 @@ function PartnerLayout({ children }: AuthLayoutProps) {
     // Redirect partners with onboarding
     useEffect(() => {
         if (!isCheckingAuth && isPartner && !isCheckingPartnerAccess && partnerAccessStatus?.onboarding) {
-            router.push('/complete-partner-profile');
+            router.push('/onboarding');
         }
     }, [isCheckingAuth, isPartner, isCheckingPartnerAccess, partnerAccessStatus?.onboarding, router]);
 
@@ -87,7 +87,7 @@ function PartnerLayout({ children }: AuthLayoutProps) {
                         You need to complete your onboarding to continue.
                     </p>
                     <Button asChild className="w-full">
-                        <Link href="/partner/onboarding">Complete Onboarding</Link>
+                        <Link href="/onboarding">Complete Onboarding</Link>
                     </Button>
                 </div>
             </div>
@@ -111,36 +111,36 @@ function PartnerLayout({ children }: AuthLayoutProps) {
             </div>
         );
     }
+    return <>{children}</>;
+    // return (
+    //     <SidebarProvider>
+    //         <PartnerSidebar />
+    //         <main className='flex-1 flex flex-col'>
+    //             {/* Header */}
+    //             <header className='flex items-center justify-between h-16  bg-neutral-50 dark:bg-neutral-900 px-6'>
+    //                 <SidebarTrigger />
 
-    return (
-        <SidebarProvider>
-            <AdminSidebar />
-            <main className='flex-1 flex flex-col'>
-                {/* Header */}
-                <header className='flex items-center justify-between h-16  bg-neutral-50 dark:bg-neutral-900 px-6'>
-                    <SidebarTrigger />
+    //                 {/* Admin Access Status */}
+    //                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+    //                     <div className="flex items-center gap-1">
+    //                         <div className="w-2 h-2 rounded-full bg-lime-600"></div>
+    //                         <span className='text-xs'>Partner Access Active</span>
+    //                     </div>
+    //                     {partnerAccessStatus?.partnerAccessKeyExpires && (
+    //                         <span className="text-xs">
+    //                             (expires {dayjs(partnerAccessStatus.partnerAccessKeyExpires).format('h:mm A')})
+    //                         </span>
+    //                     )}
+    //                 </div>
+    //             </header>
 
-                    {/* Admin Access Status */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full bg-lime-600"></div>
-                            <span className='text-xs'>Admin Access Active</span>
-                        </div>
-                        {partnerAccessStatus?.partnerAccessKeyExpires && (
-                            <span className="text-xs">
-                                (expires {dayjs(partnerAccessStatus.partnerAccessKeyExpires).format('h:mm A')})
-                            </span>
-                        )}
-                    </div>
-                </header>
-
-                {/* Content */}
-                <div className="flex-1 overflow-auto">
-                    {children}
-                </div>
-            </main>
-        </SidebarProvider>
-    );
+    //             {/* Content */}
+    //             <div className="flex-1 overflow-auto">
+    //                 {children}
+    //             </div>
+    //         </main>
+    //     </SidebarProvider>
+    // );
 }
 
 export default PartnerLayout;

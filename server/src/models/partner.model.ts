@@ -2,15 +2,16 @@ import mongoose, { Document } from "mongoose";
 
 interface PartnerType extends Document {
     accountId: mongoose.Types.ObjectId;
-    legalAddressId?: mongoose.Types.ObjectId;
     partnerAccessKey?: string;
     partnerAccessKeyExpires?: Date;
     partnerAccessKeyExpired?: boolean;
     identityNumber: string;
     businessName?: string;
+    businessDescription?: string;
     licenseDocument?: string;
     verified: boolean;
     onboarding: boolean;
+    
     // Metrics
     totalSales: number;
     totalCustomers: number;
@@ -27,10 +28,10 @@ interface PartnerType extends Document {
 
 const partnerSchema = new mongoose.Schema<PartnerType>({
     accountId: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true, unique: true },
-    legalAddressId: { type: mongoose.Schema.Types.ObjectId, ref: "Address" },
     partnerAccessKey: { type: String },
     partnerAccessKeyExpires: { type: Date },
     businessName: { type: String },
+    businessDescription: { type: String },
     licenseDocument: { type: String},
     identityNumber: { type: String },
     totalSales: { type: Number, default: 0 },

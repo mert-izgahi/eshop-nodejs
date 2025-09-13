@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { AccountType } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/axios-client";
-import { SignInSchema, SignUpSchema } from "@/lib/zod";
+import { SignInSchema, SignUpAsPartnerSchema, SignUpSchema } from "@/lib/zod";
 import { toast } from "sonner";
 import { storage } from "@/lib/local-storage";
 
@@ -18,7 +18,7 @@ interface AuthContextType {
     isSigningOut: boolean;
     signIn: (credentials: SignInSchema) => Promise<void>;
     signUp: (userData: SignUpSchema) => Promise<void>;
-    signUpAsPartner: (userData: SignUpSchema) => Promise<void>;
+    signUpAsPartner: (userData: SignUpAsPartnerSchema) => Promise<void>;
     signOut: () => Promise<void>;
     refreshUser: () => Promise<any>;
 }
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     const { mutateAsync: registerAsPartner, isPending: isSigningUpAsPartner } = useMutation({
-        mutationFn: async (userData: SignUpSchema) => {
+        mutationFn: async (userData: SignUpAsPartnerSchema) => {
             const { data } = await api.post("/api/v1/auth/register-as-partner", userData);
             return data.data;
         },

@@ -34,7 +34,7 @@ function RequestAdminAccess() {
   const { mutate: requestPartnerAccess, isPending: isRequesting } = useMutation({
     mutationKey: ["request-partner-access-key"],
     mutationFn: async () => {
-      const response = await api.post("/api/v1/partner/request-admin-access");
+      const response = await api.post("/api/v1/partner/request-partner-access");
       return response.data;
     },
     onSuccess: (data) => {

@@ -57,7 +57,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const registerAsPartner = async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName, phoneNumber } = req.body;
+  const { email, password, firstName, lastName, phoneNumber, identityNumber, licenseDocument } = req.body;
 
   const existingAccount = await Account.findOne({ email });
   if (existingAccount) {
@@ -73,13 +73,16 @@ export const registerAsPartner = async (req: Request, res: Response) => {
     phoneNumber,
     role: "partner",
   });
-  console.log(account);
+
+  
   
   // Create Seller Profile
   await PartnerProfile.create({
     accountId: account._id,
     onboarding: true,
-    verified: false
+    verified: false,
+    identityNumber,
+    licenseDocument
   });
 
 

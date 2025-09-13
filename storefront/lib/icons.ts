@@ -20,7 +20,14 @@ import {
     Trash2 as DeleteIcon,
     Copy as CopyIcon,
     CopyCheck as CopiedIcon,
-    Eye as DetailsIcon
+    Eye as DetailsIcon,
+    ChartArea as AnalyticsIcon,
+    Star as ReviewIcon,
+    ArrowDownFromLine as RefundIcon,
+    CloudDownload as RefundRequestIcon,
+    Warehouse as WarehouseIcon,
+    MessageCircle as ChatIcon,
+    Bell as NotificationIcon
 } from 'lucide-react';
 
 export {
@@ -45,5 +52,12 @@ export {
     DeleteIcon,
     CopyIcon,
     CopiedIcon,
-    DetailsIcon
+    DetailsIcon,
+    AnalyticsIcon,
+    ReviewIcon,
+    RefundIcon,
+    RefundRequestIcon,
+    WarehouseIcon,
+    ChatIcon,
+    NotificationIcon
 };

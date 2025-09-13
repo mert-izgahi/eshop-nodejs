@@ -1,10 +1,11 @@
 
-import { AdminAccessError, UnauthorizedError } from "../utils/api-errors";
+import { AdminAccessError, PartnerAccessError, UnauthorizedError } from "../utils/api-errors";
 import { type Request, type Response, type NextFunction } from "express";
 import { log } from "../utils/logger";
 import { JwtService, type IPayload } from "../services/jwt";
 import Account from "../models/account.model";
 import AdminProfile from "../models/admin.model";
+import PartnerProfile from "../models/partner.model";
 
 export const authMiddleware = async (
   req: Request,
@@ -47,7 +48,7 @@ export const authorizeFor = (roles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const account = res.locals.account;
-      
+
       if (!account) {
         throw new UnauthorizedError("Account not found");
       }
@@ -72,7 +73,7 @@ export const adminAccessMiddleware = async (
 ) => {
   try {
     const account = res.locals.account;
-    
+
     if (!account) {
       throw new AdminAccessError("Account not found");
     }
@@ -88,16 +89,60 @@ export const adminAccessMiddleware = async (
     }
     const now = new Date();
     const expiresAt = new Date(profile.adminAccessKeyExpires);
-    
+
     if (expiresAt <= now) {
       // Clean up expired key
       await AdminProfile.findOne({ account: account._id }, {
-        $unset: { 
+        $unset: {
           adminAccessKey: 1,
-          adminAccessKeyExpires: 1 
+          adminAccessKeyExpires: 1
         }
       });
       throw new AdminAccessError("Admin access key expired");
+    }
+
+    next();
+  } catch (error) {
+    log.error(error);
+    next(error);
+  }
+};
+
+
+export const partnerAccessMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const account = res.locals.account;
+
+    if (!account) {
+      throw new PartnerAccessError("Account not found");
+    }
+
+    if (account.role !== "partner") {
+      throw new PartnerAccessError("Partner role required");
+    }
+    
+    
+    const profile = await PartnerProfile.findOne({ accountId: account._id });
+
+    if (!profile) {
+      throw new PartnerAccessError("Partner profile not found");
+    }
+    const now = new Date();
+    const expiresAt = new Date(profile.partnerAccessKeyExpires!);
+
+    if (expiresAt <= now) {
+      // Clean up expired key
+      await PartnerProfile.findOne({ accountId: account._id }, {
+        $unset: {
+          partnerAccessKey: 1,
+          partnerAccessKeyExpires: 1
+        }
+      });
+      throw new PartnerAccessError("Partner access key expired");
     }
 
     next();

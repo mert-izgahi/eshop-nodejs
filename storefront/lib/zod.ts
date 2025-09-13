@@ -37,6 +37,11 @@ export const signUpSchema = z
     path: ["confirmPassword"],
   });
 
+export const signUpAsPartnerSchema = z.object({
+  ...signUpSchema.shape,
+  identityNumber: z.string().min(8, "Identity number must be at least 8 characters long"),
+  licenseDocument: z.string().min(8, "License document must be at least 8 characters long"),
+})
 
 export const signInSchema = z.object({
   email: z.email("Email must be a valid email address"),
@@ -76,7 +81,19 @@ export const partnerAccessVerifyKeySchema = z.object({
   partnerKey: z.string().min(6, "Key must be at least 6 characters long"),
 });
 
+
+export const storeSchema = z.object({
+  name: z.string().min(2, "Store name must be at least 2 characters long"),
+  description: z.string().min(2, "Store description must be at least 2 characters long"),
+  street: z.string().min(2, "Store street address must be at least 2 characters long"),
+  city: z.string().min(2, "Store city must be at least 2 characters long"),
+  state: z.string().min(2, "Store state must be at least 2 characters long"),
+  logo: z.string().min(2, "Store logo must be at least 2 characters long"),
+  banner: z.string().min(2, "Store banner must be at least 2 characters long"),
+})
+
 export type SignUpSchema = z.infer<typeof signUpSchema>;
+export type SignUpAsPartnerSchema = z.infer<typeof signUpAsPartnerSchema>;
 export type SignInSchema = z.infer<typeof signInSchema>;
 
 export type AdminAccessVerifyKeySchema = z.infer<
@@ -87,3 +104,5 @@ export type UpdateCustomerSchema = z.infer<typeof updateCustomerSchema>;
 export type PartnerAccessVerifyKeySchema = z.infer<
   typeof partnerAccessVerifyKeySchema
 >;
+
+export type StoreSchema = z.infer<typeof storeSchema>;

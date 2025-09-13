@@ -36,6 +36,12 @@ class AdminAccessError extends ApiError {
     super("AdminAccessError", message, 401);
   }
 }
+
+class PartnerAccessError extends ApiError {
+  constructor(message: string = "PartnerAccessError") {
+    super("PartnerAccessError", message, 401);
+  }
+}
 class ForbiddenError extends ApiError {
   constructor(message: string = "Forbidden") {
     super("Forbidden", message, 403);
@@ -69,5 +75,6 @@ export {
   ConflictError,
   InternalServerError,
   ValidationError,
-  AdminAccessError
+  AdminAccessError,
+  PartnerAccessError
 };

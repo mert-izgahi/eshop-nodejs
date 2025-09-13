@@ -12,16 +12,17 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { SignUpSchema, signUpSchema } from "@/lib/zod";
+import { SignUpAsPartnerSchema, signUpAsPartnerSchema } from "@/lib/zod";
 import { Checkbox } from "../ui/checkbox";
 import Link from "next/link";
 import { useAuth } from "@/providers/auth-provider";
 import { useRouter } from "next/navigation";
+import DocField from "../common/doc-field";
 
 
 export const SignupAsPartnerForm = () => {
-  const form = useForm<SignUpSchema>({
-    resolver: zodResolver(signUpSchema),
+  const form = useForm<SignUpAsPartnerSchema>({
+    resolver: zodResolver(signUpAsPartnerSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -32,12 +33,14 @@ export const SignupAsPartnerForm = () => {
       acceptMarketing: false,
       role: "partner",
       phoneNumber: "",
+      identityNumber: "",
+      licenseDocument: "",
     },
   });
 
   const { signUpAsPartner } = useAuth();
   const router = useRouter();
-  const onSubmit = async (data: SignUpSchema) => {
+  const onSubmit = async (data: SignUpAsPartnerSchema) => {
     await signUpAsPartner(data);
     router.push("/");
   };
@@ -143,6 +146,41 @@ export const SignupAsPartnerForm = () => {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="identityNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Identity Number</FormLabel>
+              <FormControl>
+                <Input placeholder="123-456-7890" {...field} />
+              </FormControl>
+              <FormDescription>
+                Please enter your identity number.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="licenseDocument"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>License Document</FormLabel>
+              <FormControl>
+                <DocField value={field.value} onChange={field.onChange} />
+              </FormControl>
+              <FormDescription>
+                Please upload your license document.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="acceptPrivacyAndTerms"

@@ -8,6 +8,8 @@ import {
     sendSuccessResponse,
 } from "../utils";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/api-errors";
+import Store from "../models/store.model";
+import axios from "axios";
 
 
 // ======================================================================================================
@@ -126,4 +128,118 @@ export const checkPartnerStatus = async (req: Request, res: Response) => {
         partnerAccessKeyExpires: profile.partnerAccessKeyExpires,
         onboarding: profile.onboarding
     });
+};
+
+// ======================================================================================================
+// Stores
+// ======================================================================================================
+export const createStore = async (req: Request, res: Response) => {
+
+    const account = res.locals.account;
+
+    if (!account || account.role !== 'partner') {
+        throw new UnauthorizedError("Unauthorized");
+    }
+
+    const profile = await PartnerProfile.findOne({ accountId: account._id });
+
+    if (!profile) {
+        throw new BadRequestError("Partner profile not found");
+    }
+
+    await Store.create({
+        accountId: account._id,
+        partnerId: profile._id,
+        name: req.body.name,
+        description: req.body.description,
+        address: {
+            street: req.body.street,
+            city: req.body.city,
+            state: req.body.state,
+            country: "سوريا"
+        },
+        logo: req.body.logo,
+        banner: req.body.banner
+    });
+
+    // Update onboarding status
+    profile.onboarding = false;
+    profile.totalStores += 1;
+
+    await profile.save();
+
+    sendSuccessResponse(res, 200, "Store created", true);
+};
+
+export const getStores = async (req: Request, res: Response) => {
+    const account = res.locals.account;
+
+    if (!account || account.role !== 'partner') {
+        throw new UnauthorizedError("Unauthorized");
+    }
+
+    const profile = await PartnerProfile.findOne({ accountId: account._id });
+
+    if (!profile) {
+        throw new BadRequestError("Partner profile not found");
+    }
+
+    const stores = await Store.find({ partnerId: profile._id });
+
+    sendSuccessResponse(res, 200, "Stores retrieved", stores);
+};
+
+export const getStore = async (req: Request, res: Response) => {
+    const account = res.locals.account;
+
+    if (!account || account.role !== 'partner') {
+        throw new UnauthorizedError("Unauthorized");
+    }
+
+    const profile = await PartnerProfile.findOne({ accountId: account._id });
+
+    if (!profile) {
+        throw new BadRequestError("Partner profile not found");
+    }
+
+    const store = await Store.findOne({ _id: req.params.id, partnerId: profile._id });
+
+    sendSuccessResponse(res, 200, "Store retrieved", store);
+};
+
+export const updateStore = async (req: Request, res: Response) => {
+    const account = res.locals.account;
+
+    if (!account || account.role !== 'partner') {
+        throw new UnauthorizedError("Unauthorized");
+    }
+
+    const profile = await PartnerProfile.findOne({ accountId: account._id });
+
+    if (!profile) {
+        throw new BadRequestError("Partner profile not found");
+    }
+
+    const store = await Store.findByIdAndUpdate({ _id: req.params.id, partnerId: profile._id }, req.body, { new: true });
+
+    sendSuccessResponse(res, 200, "Store updated", true);
+};
+
+
+export const deleteStore = async (req: Request, res: Response) => {
+    const account = res.locals.account;
+
+    if (!account || account.role !== 'partner') {
+        throw new UnauthorizedError("Unauthorized");
+    }
+
+    const profile = await PartnerProfile.findOne({ accountId: account._id });
+
+    if (!profile) {
+        throw new BadRequestError("Partner profile not found");
+    }
+
+    const store = await Store.findOneAndDelete({ _id: req.params.id, partnerId: profile._id });
+
+    sendSuccessResponse(res, 200, "Store deleted", true);
 };

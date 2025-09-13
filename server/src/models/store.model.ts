@@ -1,13 +1,15 @@
 import mongoose, { Document } from "mongoose";
-
+import axios from "axios";
+const Nominatim_URL = "https://nominatim.openstreetmap.org/search"
 interface StoreType extends Document {
     name: string;
     description?: string;
 
     // Ownership
-    owner: mongoose.Types.ObjectId;
-    followers: mongoose.Types.ObjectId[];
-    staff?: mongoose.Types.ObjectId[];
+    accountId: mongoose.Types.ObjectId;
+    partnerId: mongoose.Types.ObjectId;
+    followersIds: mongoose.Types.ObjectId[];
+    staffIds?: mongoose.Types.ObjectId[];
     // Media
     logo?: string;
     banner?: string;
@@ -32,7 +34,10 @@ interface StoreType extends Document {
         city?: string;
         state?: string;
         country?: string;
-        zipCode?: string;
+        coordinates?: {
+            latitude?: number;
+            longitude?: number;
+        };
     };
 
     // Returns and Policies
@@ -64,9 +69,10 @@ const storeSchema = new mongoose.Schema<StoreType>(
         description: { type: String },
 
         // Ownership
-        owner: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true },
-        followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Account" }],
-        staff: [{ type: mongoose.Schema.Types.ObjectId, ref: "Account" }],
+        accountId: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true },
+        partnerId: { type: mongoose.Schema.Types.ObjectId, ref: "Partner", required: true },
+        followersIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Account" }],
+        staffIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Account" }],
         // Media
         logo: { type: String },
         banner: { type: String },
@@ -94,6 +100,10 @@ const storeSchema = new mongoose.Schema<StoreType>(
             city: { type: String },
             state: { type: String },
             zipCode: { type: String },
+            coordinates: {
+                latitude: { type: Number },
+                longitude: { type: Number },
+            },
             country: { type: String, default: "USA" },
         },
 
@@ -117,6 +127,66 @@ const storeSchema = new mongoose.Schema<StoreType>(
         timestamps: true,
     }
 );
+
+
+// GeoCode
+// GeoCode
+storeSchema.pre("save", async function (next) {
+    try {
+        console.log("GeoCode");
+        console.log(this.address);
+        
+        if (this.isModified("address") && this.address) {
+            // Build query string (flexible if some parts are missing)
+            const parts = [
+                this.address.street,
+                this.address.city,
+                this.address.state,
+                this.address.country,
+            ].filter(Boolean); // remove undefined
+
+            if (parts.length === 0) return next();
+
+            const query = parts.join(", ");
+
+            const response = await axios.get(Nominatim_URL, {
+                params: {
+                    q: query,
+                    format: "json",
+                    addressdetails: 1,
+                    limit: 1, // only first result
+                },
+                headers: {
+                    "User-Agent": "E-Shopping/1.0 (myemail@example.com)",
+                },
+            });
+
+            if (response.data && response.data.length > 0) {
+                const location = response.data[0];
+                this.address.coordinates = {
+                    latitude: parseFloat(location.lat),
+                    longitude: parseFloat(location.lon),
+                };
+
+                // If some fields missing, autofill from Nominatim response
+                if (!this.address.city && location.address.city) {
+                    this.address.city = location.address.city;
+                }
+                if (!this.address.state && location.address.state) {
+                    this.address.state = location.address.state;
+                }
+                if (!this.address.country && location.address.country) {
+                    this.address.country = location.address.country;
+                }
+            }
+        }
+        next();
+    } catch (err:any) {
+        console.error("Geocoding failed:", err.message);
+        next(); // don’t block saving
+    }
+});
+
 
 const Store = mongoose.model<StoreType>("Store", storeSchema);
 
